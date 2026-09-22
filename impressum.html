@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Datenschutzerkl&auml;rung &ndash; Spitalbierfest | B&uuml;rgerspitalstiftung Straubing</title>
+<meta name="robots" content="noindex, follow">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header__brand">
+    <span class="site-header__name">B&uuml;rgerspitalstiftung Straubing</span>
+    <span class="site-header__since">seit 1616</span>
+  </div>
+  <nav class="site-header__nav">
+    <a href="index.html">Das Fest</a>
+    <a href="index.html#reservieren">Reservieren</a>
+    <a href="impressum.html">Impressum</a>
+  </nav>
+</header>
+
+<main>
+<article class="legal">
+  <h1>Datenschutzerkl&auml;rung</h1>
+  <h3>Herausgeber:</h3>
+	<p>Bürgerspitalstiftung Straubing<br>Pfauenstraße 6<br>94315 Straubing</p>
+	<p>Telefon: +49 (0) 9421 980-3<br>E-Mail: stiftungsamt@straubing.de</p>
+	<p>Die Bürgerspitalstiftung Straubing ist eine  rechtsfähige örtliche Stiftung des öffentlichen Rechts und wird verwaltet durch die Stadt Straubing. Diese wird vertreten durch den Oberbürgermeister Herrn Markus Pannermayr.</p>
+	<h3>Verantwortlich für den Inhalt:</h3>
+	<p>Bürgerspitalstiftung Straubing<br>Herr Armin Meyer<br>Pfauenstraße 6<br>94315 Straubing</p>
+</article>
+</main>
+
+<footer id="recht" class="site-footer">
+  <div class="site-footer__bar">
+    <span>&copy; 2026 B&uuml;rgerspitalstiftung Straubing</span>
+    <a href="impressum.html">Impressum</a>
+    <a href="datenschutz.html">Datenschutz</a>
+    <a href="mailto:stiftungsamt@straubing.de">stiftungsamt@straubing.de</a>
+  </div>
+</footer>
+
+<div class="cookie-banner" id="cookieBanner" hidden role="dialog" aria-live="polite" aria-label="Hinweis zu Cookies">
+  <p>Diese Website verwendet ausschlie&szlig;lich technisch notwendige Funktionen. Es werden keine Tracking- oder Marketing-Cookies eingesetzt. Mehr dazu in unserer Datenschutzerkl&auml;rung.</p>
+  <button type="button" id="cookieBannerOk">Verstanden</button>
+</div>
+<script>
+(function () {
+  var KEY = "sbf-cookie-notice-dismissed";
+  var banner = document.getElementById("cookieBanner");
+  try {
+    if (!localStorage.getItem(KEY)) banner.hidden = false;
+  } catch (e) {
+    banner.hidden = false;
+  }
+  document.getElementById("cookieBannerOk").addEventListener("click", function () {
+    banner.hidden = true;
+    try { localStorage.setItem(KEY, "1"); } catch (e) {}
+  });
+})();
+</script>
+</body>
+</html>

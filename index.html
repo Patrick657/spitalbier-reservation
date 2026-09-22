@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1. Straubinger Spitalbierfest 2026 &ndash; Platz reservieren | B&uuml;rgerspitalstiftung Straubing</title>
+<meta name="description" content="1. Straubinger Spitalbierfest am 30. Oktober 2026 im Rittersaal des Herzogschlosses. Eintritt frei &ndash; Pl&auml;tze bitte vorher reservieren.">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header__brand">
+    <span class="site-header__name">Bürgerspitalstiftung Straubing</span>
+    <!--<span class="site-header__since">seit 1616</span>-->
+  </div>
+  <nav class="site-header__nav">
+    <a href="index.html">Das Fest</a>
+    <a href="#reservieren">Reservieren</a>
+    <a href="impressum.html">Impressum</a>
+  </nav>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="hero__image">
+      <img src="assets/wirtsstube.png" alt="Zeichnung: G&auml;ste in historischer Wirtsstube">
+      <div class="hero__image-fade" aria-hidden="true"></div>
+    </div>
+    <div class="hero__text">
+		<div id="logo">
+			<a href="https://straubinger-spitalbier.de" title="Straubinger Spitalbier">
+				<img src="assets/logo_spitalbier.svg" alt="Straubinger Spitalbier">
+			</a>
+		</div>
+      <div class="hero__kicker">1616 &ndash; 2026</div>
+      <h1>1. Straubinger Spitalbierfest</h1>
+      <h3>Lassen Sie uns gemeinsam die Verleihung des Braurechts vor 410 Jahren feiern.</h3>
+      <p class="hero__lead">Dazu gibt es frisches Spitalbier vom Fass, eine Brotzeit und eine zünftige Blasmusik im Rittersaal des Herzogschlosses. Der Eintritt ist frei, um eine Tischreservierung wird gebeten.</p>
+      <dl class="hero__facts">
+        <dt>Wann</dt><dd>Freitag, 30. Oktober 2026 - 18:00 Uhr</dd>
+        <dt>Wo</dt><dd>Rittersaal im Herzogschloss, Straubing</dd>
+        <dt>Eintritt</dt><dd>frei</dd>
+        <dt>Musik</dt><dd>Blechschinda</dd>
+      </dl>
+      <a href="#reservieren" class="btn btn--primary">Platz reservieren</a>
+    </div>
+  </section>
+
+  <!--<section id="fest" class="features">
+    <div class="features__item">
+      <h3>Bier aus der Stiftung</h3>
+      <p>Seit 1616 braut die B&uuml;rgerspitalstiftung f&uuml;r ihre Pfr&uuml;ndner. Zum Jubil&auml;um wird wieder ausgeschenkt.</p>
+    </div>
+    <div class="features__item">
+      <h3>F&uuml;r das leibliche Wohl</h3>
+      <p>Brotzeit vom Brett: Bauernbrot, Bratw&uuml;rste, Butter und Radi. Bezahlung vor Ort.</p>
+    </div>
+    <div class="features__item">
+      <h3>Blechschinda</h3>
+      <p>Bayerische Blasmusik zwischen Wirtshaus und Weltmusik &ndash; ab 19:00 Uhr im Rittersaal.</p>
+    </div>
+  </section>-->
+
+  <section id="reservieren" class="reservation">
+    <div class="reservation__info">
+      <h2>Tisch reservieren</h2>
+      <p>Wir halten Ihre Pl&auml;tze bis 18:30 Uhr frei &ndash; danach entfallen die Reservierungen und die Tische werden freigegeben. Sie erhalten sofort eine Best&auml;tigung per E-Mail.</p>
+      <div class="capacity-box">
+        <div class="capacity-box__row">
+          <span>Noch freie Pl&auml;tze</span>
+          <span class="capacity-box__value"><span id="seatsLeftText">&hellip;</span> von <span id="capText">220</span></span>
+        </div>
+        <div class="capacity-box__track">
+          <div class="capacity-box__fill" id="seatsFillOuter"></div>
+        </div>
+        <div class="capacity-box__note">Stand: heute, laufend aktualisiert. Maximal 6 Personen pro Reservierung &ndash; f&uuml;r gr&ouml;&szlig;ere Gruppen bitte direkt melden.</div>
+      </div>
+      <div class="reservation__contact">Fragen? <a href="mailto:stiftungsamt@straubing.de">stiftungsamt@straubing.de</a></div>
+    </div>
+
+    <div class="form-card">
+      <div id="soldOutBanner" class="form-card__banner form-card__banner--soldout" role="alert" hidden>
+        <h3>Ausreserviert</h3>
+        <p>Ausreserviert? F&uuml;r spontane Besuche stehen <strong>weitere Sitzpl&auml;tze sowie Stehtische</strong> zur Verf&uuml;gung!</p>
+      </div>
+
+      <form id="reservationForm" novalidate>
+        <div class="form-card__head">
+          <h2>Pl&auml;tze reservieren</h2>
+          <p>Bis 6 Personen pro Reservierung. Tische werden bis 18:30 Uhr freigehalten, danach entfallen die Reservierungen.</p>
+        </div>
+
+        <div class="mini-progress">
+          <div class="mini-progress__track"><div class="mini-progress__fill" id="seatsFillInner"></div></div>
+          <div class="mini-progress__text"><span id="seatsLeftTextInner">&hellip;</span> Pl&auml;tze frei</div>
+        </div>
+
+        <div class="form-grid">
+          <label class="field">
+            Name
+            <input type="text" id="name" name="name" placeholder="Vor- und Nachname" autocomplete="name">
+            <span class="field__error" id="err-name"></span>
+          </label>
+          <label class="field">
+            E-Mail
+            <input type="email" id="email" name="email" placeholder="name@beispiel.de" autocomplete="email">
+            <span class="field__error" id="err-email"></span>
+          </label>
+          <label class="field">
+            Telefon
+            <input type="tel" id="phone" name="phone" placeholder="optional" autocomplete="tel">
+          </label>
+          <div class="field">
+            <span id="guestsLabel">Anzahl Personen</span>
+            <div class="stepper" role="group" aria-labelledby="guestsLabel">
+              <button type="button" class="stepper__btn" id="guestsMinus" aria-label="weniger Personen">&ndash;</button>
+              <div class="stepper__value" id="guestsValue" aria-live="polite">2</div>
+              <button type="button" class="stepper__btn" id="guestsPlus" aria-label="mehr Personen">+</button>
+            </div>
+          </div>
+        </div>
+
+        <label class="checkbox">
+          <input type="checkbox" id="dsgvo" name="dsgvo">
+          <span>Ich bin mit der Speicherung meiner Daten zur Bearbeitung der Reservierung einverstanden (<a href="#recht">Datenschutz</a>). <span class="required">*</span></span>
+        </label>
+        <span class="field__error" id="err-dsgvo"></span>
+
+        <label class="checkbox">
+          <input type="checkbox" id="news" name="news">
+          <span>Ich m&ouml;chte &uuml;ber weitere Veranstaltungen der Stiftung informiert werden.</span>
+        </label>
+
+        <div class="hp-field" aria-hidden="true">
+          <label for="website">Website</label>
+          <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+        </div>
+
+        <div class="form-card__banner" id="formBanner" role="alert" hidden></div>
+
+        <button type="submit" class="btn btn--submit">Reservierung absenden</button>
+        <div class="form-card__note">Best&auml;tigung kommt sofort per E-Mail &middot; R&uuml;ckfragen: <a href="mailto:stiftungsamt@straubing.de">stiftungsamt@straubing.de</a></div>
+      </form>
+
+      <div id="confirmation" class="confirmation" hidden>
+        <div class="confirmation__badge">&#10003;</div>
+        <h3>Wir halten zusammen &ndash; Tisch reserviert</h3>
+        <p><strong id="confirmGuests"></strong> auf den Namen <strong id="confirmName"></strong>. Die Best&auml;tigung geht an <strong id="confirmEmail"></strong>.</p>
+        <div class="confirmation__code">Reservierungsnummer <strong id="confirmCode"></strong> &middot; g&uuml;ltig bis 18:30 Uhr am 30.10.2026</div>
+        <button type="button" class="btn btn--reset" id="resetForm">Weitere Reservierung</button>
+      </div>
+    </div>
+  </section>
+</main>
+	
+	<section id="partner" class="partner">
+		<div class="inner">
+			<div class="partner-item">
+				<a href="https://www.buergerspitalstifung-straubing.de" title="Bürgerspitalsiftung Straubing">
+					<img src="assets/logo_buergerspitalstiftung.svg" alt="Burgerspitalstiftung Straubing">
+				</a>
+			</div>
+			<div class="partner-item">
+				<a href="https://straubinger-spitalbier.de" title="Straubinger Spitalbier">
+					<img src="assets/logo_spitalbier.svg" alt="Straubinger Spitalbier">
+				</a>
+			</div>
+			<div class="partner-item">
+				<a href="https://www.foerderverein-straubing.de" title="Förderverein Straubing">
+					<img src="assets/logo_foerderverein.svg" alt="Förderverein Straubing">
+				</a>
+			</div>
+		</div>
+	</section>
+
+<footer id="recht" class="site-footer">
+  <div class="site-footer__bar">
+    <span>&copy; 2026 B&uuml;rgerspitalstiftung Straubing</span>
+    <a href="impressum.html">Impressum</a>
+    <a href="datenschutz.html">Datenschutz</a>
+    <a href="mailto:stiftungsamt@straubing.de">stiftungsamt@straubing.de</a>
+  </div>
+</footer>
+
+<script src="js/reservation.js"></script>
+</body>
+</html>

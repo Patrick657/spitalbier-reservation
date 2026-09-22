@@ -1,0 +1,10 @@
+# Real credentials for the live deployment — never commit
+api/config.local.php
+
+# htpasswd hash for the admin dashboard
+dashboard/.htpasswd
+
+# stray file that duplicates .htaccess content with a server path
+dashboard/download
+
+.DS_Store

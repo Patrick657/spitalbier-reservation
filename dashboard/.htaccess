@@ -1,0 +1,23 @@
+# Password protection for the reservation dashboard.
+#
+# IMPORTANT: AuthUserFile needs an ABSOLUTE server filesystem path, not a
+# relative one. Replace the path below with the real path to this folder on
+# your Plesk server (Plesk shows it under Websites & Domains > Hosting
+# Settings > Document root, e.g. /var/www/vhosts/straubing.de/httpdocs —
+# this file then lives at .../httpdocs/dashboard/.htpasswd).
+AuthType Basic
+AuthName "Spitalbierfest Dashboard"
+AuthUserFile /var/www/vhosts/hosting243590.a2e28.netcup.net/straubinger-spitalbier.de/httpdocs/spitalbierfest/dashboard/.htpasswd
+Require valid-user
+
+# Belt and suspenders: never serve .htpasswd/.htaccess themselves, even
+# though Apache already blocks dotfiles named .ht* by default on most setups.
+<FilesMatch "^\.ht">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
