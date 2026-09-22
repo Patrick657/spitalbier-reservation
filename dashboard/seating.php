@@ -180,6 +180,7 @@ $flash = isset($_GET['msg']) ? ($flashes[$_GET['msg']] ?? null) : null;
   <a href="index.php">Buchungen</a>
   <a href="seating.php" class="is-active">Sitzplan</a>
   <a href="new.php">Neue Reservierung</a>
+  <a href="export.php">PDF-Export</a>
 </nav>
 
 <main class="dash-main">
@@ -241,9 +242,7 @@ $flash = isset($_GET['msg']) ? ($flashes[$_GET['msg']] ?? null) : null;
       </div>
       </div>
     </div>
-  </div>
 
-  <div class="dash-two-col">
     <div>
       <h2 class="dash-two-col__heading">Tischreservierung</h2>
       <div class="assign-panel">
