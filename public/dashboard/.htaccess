@@ -2,12 +2,13 @@
 #
 # IMPORTANT: AuthUserFile needs an ABSOLUTE server filesystem path, not a
 # relative one. Replace the path below with the real path to this folder on
-# your Plesk server (Plesk shows it under Websites & Domains > Hosting
-# Settings > Document root, e.g. /var/www/vhosts/straubing.de/httpdocs —
-# this file then lives at .../httpdocs/dashboard/.htpasswd).
+# your Plesk server. Since the app now ships a public/ folder as the web
+# root, set Websites & Domains > Hosting Settings > Document root to
+# .../httpdocs/spitalbierfest/public — this file then lives one level
+# deeper than before, at .../httpdocs/spitalbierfest/public/dashboard/.htpasswd.
 AuthType Basic
 AuthName "Spitalbierfest Dashboard"
-AuthUserFile /var/www/vhosts/hosting243590.a2e28.netcup.net/straubinger-spitalbier.de/httpdocs/spitalbierfest/dashboard/.htpasswd
+AuthUserFile /var/www/vhosts/hosting243590.a2e28.netcup.net/straubinger-spitalbier.de/httpdocs/spitalbierfest/public/dashboard/.htpasswd
 Require valid-user
 
 # Belt and suspenders: never serve .htpasswd/.htaccess themselves, even

@@ -3,9 +3,9 @@ declare(strict_types=1);
 
 header('Content-Type: application/json; charset=utf-8');
 
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/db.php';
-require_once __DIR__ . '/Mailer.php';
+require_once __DIR__ . '/../../src/config.php';
+require_once __DIR__ . '/../../src/db.php';
+require_once __DIR__ . '/../../src/Mailer.php';
 
 function sbf_json_error(int $status, string $message, array $errors = []): void
 {

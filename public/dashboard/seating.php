@@ -2,8 +2,8 @@
 declare(strict_types=1);
 session_start();
 
-require_once __DIR__ . '/../api/config.php';
-require_once __DIR__ . '/../api/db.php';
+require_once __DIR__ . '/../../src/config.php';
+require_once __DIR__ . '/../../src/db.php';
 
 if (empty($_SESSION['csrf'])) {
     $_SESSION['csrf'] = bin2hex(random_bytes(32));

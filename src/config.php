@@ -13,7 +13,7 @@ function sbf_config(): array
         return $config;
     }
 
-    $localFile = __DIR__ . '/config.local.php';
+    $localFile = __DIR__ . '/../config/config.local.php';
     $file = is_file($localFile) ? require $localFile : [];
 
     $env = static function (string $key, $default = null) {
