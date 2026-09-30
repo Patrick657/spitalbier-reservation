@@ -51,7 +51,7 @@ function sbf_config(): array
     return $config;
 }
 
-const SBF_DEADLINE_MESSAGE = 'Reservierungen sind für dieses Fest leider nicht mehr möglich (Anmeldeschluss war 18:30 Uhr).';
+const SBF_DEADLINE_MESSAGE = 'Reservierung abgeschlossen. Auf Anfrage sind noch vereinzelte Plätze verfügbar. Anfrage an: stiftungsamt@straubing.de';
 
 /**
  * True once event_deadline has passed. A misconfigured deadline string
