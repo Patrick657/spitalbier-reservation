@@ -45,8 +45,25 @@ function sbf_config(): array
         // dashboard (large groups) — the public form still enforces the
         // lower max_guests_per_reservation above.
         'admin_max_guests_per_reservation' => (int) ($file['admin_max_guests_per_reservation'] ?? 60),
-        'event_deadline' => $file['event_deadline'] ?? '2026-10-30 18:30:00',
+        'event_deadline' => $env('SBF_EVENT_DEADLINE', $file['event_deadline'] ?? '2026-10-30 18:30:00'),
     ];
 
     return $config;
+}
+
+const SBF_DEADLINE_MESSAGE = 'Reservierungen sind für dieses Fest leider nicht mehr möglich (Anmeldeschluss war 18:30 Uhr).';
+
+/**
+ * True once event_deadline has passed. A misconfigured deadline string
+ * should never block valid reservations, so parse errors count as "open".
+ */
+function sbf_deadline_passed(array $cfg): bool
+{
+    try {
+        $tz = new DateTimeZone('Europe/Berlin');
+        return new DateTime('now', $tz) >= new DateTime($cfg['event_deadline'], $tz);
+    } catch (Exception $e) {
+        error_log('[spitalbierfest] invalid event_deadline config: ' . $e->getMessage());
+        return false;
+    }
 }

@@ -24,6 +24,7 @@
   var soldOutBanner = document.getElementById("soldOutBanner");
   var submitBtn = form.querySelector("button[type=submit]");
   var submitBtnDefaultText = submitBtn.textContent;
+  var closedBanner = null;
 
   function setSeats(seatsLeft, seatPct, cap) {
     if (seatsLeft != null) {
@@ -40,7 +41,24 @@
     if (seatsLeft != null) applySoldOutState(seatsLeft);
   }
 
+  // Once the deadline has passed the form stays hidden for good; the banner
+  // is built here so index.html (not in git) needs no extra markup.
+  function applyClosedState(message) {
+    if (!closedBanner) {
+      closedBanner = document.createElement("div");
+      closedBanner.className = "form-card__banner form-card__banner--soldout";
+      closedBanner.setAttribute("role", "alert");
+      closedBanner.appendChild(document.createElement("p"));
+      form.parentNode.insertBefore(closedBanner, form);
+    }
+    closedBanner.firstChild.textContent = message;
+    soldOutBanner.hidden = true;
+    form.hidden = true;
+    confirmation.hidden = true;
+  }
+
   function applySoldOutState(seatsLeft) {
+    if (closedBanner) return;
     var soldOut = seatsLeft <= 0;
     soldOutBanner.hidden = !soldOut;
     if (soldOut) {
@@ -87,7 +105,10 @@
     fetch(API_BASE + "seats.php")
       .then(function (res) { return res.json(); })
       .then(function (data) {
-        if (data && data.ok) setSeats(data.seatsLeft, data.seatPct, data.cap);
+        if (data && data.ok) {
+          setSeats(data.seatsLeft, data.seatPct, data.cap);
+          if (data.closed) applyClosedState(data.closedMessage);
+        }
       })
       .catch(function () {
         // Keep whatever was last shown rather than breaking the page.
@@ -140,6 +161,10 @@
       })
       .then(function (data) {
         if (!data.ok) {
+          if (data.errors && data.errors.closed) {
+            applyClosedState(data.errors.closed);
+            return;
+          }
           var shown = false;
           if (data.errors) {
             if (data.errors.name) { errName.textContent = data.errors.name; shown = true; }

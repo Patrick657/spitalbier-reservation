@@ -28,4 +28,6 @@ echo json_encode([
     'seatsLeft' => $seatsLeft,
     'seatPct' => $seatPct,
     'cap' => $cap,
+    'closed' => sbf_deadline_passed($cfg),
+    'closedMessage' => SBF_DEADLINE_MESSAGE,
 ], JSON_UNESCAPED_UNICODE);

@@ -67,15 +67,8 @@ if ($phone !== '' && mb_strlen($phone) > 60) {
     $errors['phone'] = 'Telefonnummer ist zu lang.';
 }
 
-try {
-    $deadline = new DateTime($cfg['event_deadline'], new DateTimeZone('Europe/Berlin'));
-    $now = new DateTime('now', new DateTimeZone('Europe/Berlin'));
-    if ($now >= $deadline) {
-        sbf_json_error(409, 'Reservierungen sind für dieses Fest leider nicht mehr möglich (Anmeldeschluss war 18:30 Uhr).');
-    }
-} catch (Exception $e) {
-    // A misconfigured deadline string should never block valid reservations.
-    error_log('[spitalbierfest] invalid event_deadline config: ' . $e->getMessage());
+if (sbf_deadline_passed($cfg)) {
+    sbf_json_error(409, SBF_DEADLINE_MESSAGE, ['closed' => SBF_DEADLINE_MESSAGE]);
 }
 
 if ($errors) {
