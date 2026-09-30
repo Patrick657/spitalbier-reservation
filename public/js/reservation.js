@@ -51,7 +51,19 @@
       closedBanner.appendChild(document.createElement("p"));
       form.parentNode.insertBefore(closedBanner, form);
     }
-    closedBanner.firstChild.textContent = message;
+    // Turn e-mail addresses in the plain-text message into mailto links.
+    var p = closedBanner.firstChild;
+    p.textContent = "";
+    message.split(/([^\s@]+@[^\s@]+\.[a-z]{2,})/i).forEach(function (part, i) {
+      if (i % 2) {
+        var a = document.createElement("a");
+        a.href = "mailto:" + part;
+        a.textContent = part;
+        p.appendChild(a);
+      } else if (part) {
+        p.appendChild(document.createTextNode(part));
+      }
+    });
     soldOutBanner.hidden = true;
     form.hidden = true;
     confirmation.hidden = true;
