@@ -44,7 +44,7 @@ function sbf_table_mail_default_body(): string
         . "Ort: Rittersaal im Herzogschloss, Straubing\n\n"
         . "Ihre Tische werden bis 18:30 Uhr freigehalten, danach entfallen nicht angetretene Reservierungen.\n\n"
         . "Fragen? stiftungsamt@straubing.de\n\n"
-        . "Bürgerspitalstiftung Straubing";
+        . "Straubinger Spitalbier der Bürgerspitalstiftung Straubing";
 }
 
 /**

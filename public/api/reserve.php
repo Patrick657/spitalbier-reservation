@@ -170,7 +170,7 @@ try {
             . "Ort: Rittersaal im Herzogschloss, Straubing\n"
             . "Ihre Tische werden bis 18:30 Uhr freigehalten, danach entfallen nicht angetretene Reservierungen.\n\n"
             . "Fragen? stiftungsamt@straubing.de\n\n"
-            . "Bürgerspitalstiftung Straubing";
+            . "Straubinger Spitalbier der Bürgerspitalstiftung Straubing";
         $html = '<p>Vergelt&rsquo;s Gott, ' . htmlspecialchars($greetName, ENT_QUOTES, 'UTF-8') . '!</p>'
             . '<p>wir haben <strong>' . $guests . ' Plätze</strong> für Sie zum 1. Straubinger Spitalbierfest vorgemerkt.</p>'
             . '<p>Reservierungsnummer: <strong>' . htmlspecialchars($code, ENT_QUOTES, 'UTF-8') . '</strong><br>'
@@ -178,7 +178,7 @@ try {
             . 'Ort: Rittersaal im Herzogschloss, Straubing</p>'
             . '<p>Ihre Tische werden bis 18:30 Uhr freigehalten, danach entfallen nicht angetretene Reservierungen.</p>'
             . '<p>Fragen? <a href="mailto:stiftungsamt@straubing.de">stiftungsamt@straubing.de</a></p>'
-            . '<p>Bürgerspitalstiftung Straubing</p>';
+            . '<p>Straubinger Spitalbier der Bürgerspitalstiftung Straubing</p>';
 
         sbf_send_logged($pdo, $mailer, 'confirmation', $code, $email, $greetName, $subject, $text, $html);
 

@@ -36,7 +36,7 @@ function sbf_config(): array
             'user' => $env('SBF_SMTP_USER', $file['smtp']['user'] ?? ''),
             'pass' => $env('SBF_SMTP_PASS', $file['smtp']['pass'] ?? ''),
             'from_email' => $env('SBF_SMTP_FROM_EMAIL', $file['smtp']['from_email'] ?? ''),
-            'from_name' => $env('SBF_SMTP_FROM_NAME', $file['smtp']['from_name'] ?? 'Bürgerspitalstiftung Straubing'),
+            'from_name' => $env('SBF_SMTP_FROM_NAME', $file['smtp']['from_name'] ?? 'Straubinger Spitalbier'),
         ],
         'admin_email' => $env('SBF_ADMIN_EMAIL', $file['admin_email'] ?? ''),
         'capacity' => (int) ($file['capacity'] ?? 255),

@@ -26,7 +26,7 @@ return [
         'user' => 'stiftungsamt@straubing.de',
         'pass' => 'smtp-password',
         'from_email' => 'stiftungsamt@straubing.de',
-        'from_name' => 'Bürgerspitalstiftung Straubing',
+        'from_name' => 'Straubinger Spitalbier',
     ],
     // Internal notification for each new reservation. Leave as '' to disable.
     'admin_email' => 'stiftungsamt@straubing.de',

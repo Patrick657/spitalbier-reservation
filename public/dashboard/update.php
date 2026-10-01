@@ -146,12 +146,12 @@ if ($sendMail && $email !== '') {
                 . "Termin: Freitag, 30. Oktober 2026, 18:00 Uhr\n"
                 . "Ort: Rittersaal im Herzogschloss, Straubing\n\n"
                 . "Fragen? stiftungsamt@straubing.de\n\n"
-                . "Bürgerspitalstiftung Straubing";
+                . "Straubinger Spitalbier der Bürgerspitalstiftung Straubing";
             $html = '<p>Vergelt&rsquo;s Gott, ' . htmlspecialchars($greetName, ENT_QUOTES, 'UTF-8') . '!</p>'
                 . '<p>Ihre Reservierung zum 1. Straubinger Spitalbierfest wurde aktualisiert: aktuell <strong>' . $guests . ' Plätze</strong>.</p>'
                 . '<p>Termin: Freitag, 30. Oktober 2026, 18:00 Uhr<br>Ort: Rittersaal im Herzogschloss, Straubing</p>'
                 . '<p>Fragen? <a href="mailto:stiftungsamt@straubing.de">stiftungsamt@straubing.de</a></p>'
-                . '<p>Bürgerspitalstiftung Straubing</p>';
+                . '<p>Straubinger Spitalbier der Bürgerspitalstiftung Straubing</p>';
 
             sbf_send_logged($pdo, $mailer, 'update', $reservation['code'], $email, $greetName, $subject, $text, $html);
         }
