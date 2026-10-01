@@ -1,10 +1,18 @@
 <?php
 declare(strict_types=1);
 
-/** "Vorname Nachname", or just one of them when the other is missing. */
+/** "Vorname Nachname" for addressing someone (mail greeting, recipient). */
 function sbf_person_name(string $firstName, string $lastName): string
 {
     return trim($firstName . ' ' . $lastName);
+}
+
+/** "Nachname, Vorname" for lists, or just one of them when the other is missing. */
+function sbf_list_name(string $firstName, string $lastName): string
+{
+    return $firstName !== '' && $lastName !== ''
+        ? $lastName . ', ' . $firstName
+        : $firstName . $lastName;
 }
 
 /**
@@ -13,7 +21,7 @@ function sbf_person_name(string $firstName, string $lastName): string
  */
 function sbf_display_name(string $firstName, string $lastName, string $company): string
 {
-    $person = sbf_person_name($firstName, $lastName);
+    $person = sbf_list_name($firstName, $lastName);
     if ($company === '') {
         return $person;
     }
@@ -32,6 +40,6 @@ function sbf_name_html(array $r): string
     if ($company === '') {
         return $esc((string) $r['name']);
     }
-    $person = sbf_person_name((string) ($r['first_name'] ?? ''), (string) ($r['last_name'] ?? ''));
+    $person = sbf_list_name((string) ($r['first_name'] ?? ''), (string) ($r['last_name'] ?? ''));
     return $esc($company) . ($person !== '' ? '<br><span class="dash-note">(' . $esc($person) . ')</span>' : '');
 }

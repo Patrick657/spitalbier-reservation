@@ -153,7 +153,7 @@ if ($sendMail && $email !== '') {
                 . '<p>Fragen? <a href="mailto:stiftungsamt@straubing.de">stiftungsamt@straubing.de</a></p>'
                 . '<p>Bürgerspitalstiftung Straubing</p>';
 
-            sbf_send_logged($pdo, $mailer, 'update', $reservation['code'], $email, $name, $subject, $text, $html);
+            sbf_send_logged($pdo, $mailer, 'update', $reservation['code'], $email, $greetName, $subject, $text, $html);
         }
     } catch (Throwable $e) {
         error_log('[spitalbierfest] update mail error: ' . $e->getMessage());

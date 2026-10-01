@@ -45,6 +45,11 @@ foreach ($pdo->query(
     $tooltipByTable[(int) $row['table_id']][] = $label . ' – ' . (int) $row['seats'] . ' Pl.';
 }
 
+// Totals for the legend. Merged-away tables carry 0 seats, so they add nothing.
+$totalSeats = array_sum(array_map(static fn($t) => (int) $t['seats'], $tables));
+$occupiedSeats = array_sum($occupiedByTable);
+$freeSeats = max(0, $totalSeats - $occupiedSeats);
+
 $rowsByLabel = [];
 foreach ($tables as $t) {
     $rowsByLabel[$t['row_label']][] = $t;
@@ -185,8 +190,9 @@ $flash = isset($_GET['msg']) ? ($flashes[$_GET['msg']] ?? null) : null;
   <?php endif; ?>
 
   <div class="dash-legend">
-    <span class="legend-item"><span class="chair"></span> frei</span>
-    <span class="legend-item"><span class="chair is-occupied"></span> besetzt</span>
+    <span class="legend-item"><span class="chair"></span> <?= $freeSeats ?> frei</span>
+    <span class="legend-item"><span class="chair is-occupied"></span> <?= $occupiedSeats ?> besetzt</span>
+    <span class="legend-item">von <?= $totalSeats ?> Pl&auml;tzen</span>
   </div>
 
   <div class="seating-layout">

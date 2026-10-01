@@ -26,6 +26,16 @@ try {
         'SELECT sent_at, recipient_email, recipient_name, subject, kind, reservation_code, status, error
          FROM mail_log ORDER BY sent_at DESC, id DESC'
     )->fetchAll();
+
+    // Show guests the way every other list does ("Nachname, Vorname"). Looked
+    // up here rather than joined, so differing table collations can't break it.
+    $nameByCode = $pdo->query('SELECT code, name FROM reservations')->fetchAll(PDO::FETCH_KEY_PAIR);
+    foreach ($rows as &$row) {
+        if ($row['kind'] !== 'admin_notice' && isset($nameByCode[$row['reservation_code']])) {
+            $row['recipient_name'] = $nameByCode[$row['reservation_code']];
+        }
+    }
+    unset($row);
 } catch (PDOException $ex) {
     $missingTable = true;
 }

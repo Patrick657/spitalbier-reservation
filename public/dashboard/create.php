@@ -139,7 +139,7 @@ if ($sendMail && $email !== '') {
                 . '<p>Fragen? <a href="mailto:stiftungsamt@straubing.de">stiftungsamt@straubing.de</a></p>'
                 . '<p>Bürgerspitalstiftung Straubing</p>';
 
-            sbf_send_logged($pdo, $mailer, 'confirmation', $code, $email, $name, $subject, $text, $html);
+            sbf_send_logged($pdo, $mailer, 'confirmation', $code, $email, $greetName, $subject, $text, $html);
         }
     } catch (Throwable $e) {
         error_log('[spitalbierfest] admin create mail error: ' . $e->getMessage());

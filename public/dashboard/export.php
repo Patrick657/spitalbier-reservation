@@ -13,6 +13,22 @@ function e(string $v): string
 
 $tz = new DateTimeZone('Europe/Berlin');
 
+// Which document to print: everything, or one of the single handouts.
+$docs = [
+    'all' => ['label' => 'Alles', 'title' => 'Sitzplan &amp; Tischzuweisungen', 'sections' => ['plan', 'reservations', 'detail']],
+    'plan' => ['label' => 'Sitzplan', 'title' => 'Sitzplan', 'sections' => ['plan']],
+    'plan_res' => ['label' => 'Sitzplan mit Reservierungen', 'title' => 'Sitzplan &amp; Reservierungen', 'sections' => ['plan', 'reservations']],
+    'detail' => ['label' => 'Tischbelegung im Detail', 'title' => 'Tischbelegung im Detail', 'sections' => ['detail']],
+];
+$docKey = (string) ($_GET['doc'] ?? 'all');
+if (!isset($docs[$docKey])) {
+    $docKey = 'all';
+}
+$doc = $docs[$docKey];
+$show = static fn(string $section): bool => in_array($section, $doc['sections'], true);
+// A single handout already carries its name in the page title.
+$multi = count($doc['sections']) > 1;
+
 $tables = $pdo->query('SELECT id, code, row_label, position, seats, base_seats, merged_into FROM venue_tables ORDER BY row_label, position')->fetchAll();
 
 $tablesById = [];
@@ -60,7 +76,7 @@ foreach ($pdo->query(
 }
 
 $reservations = $pdo->query(
-    "SELECT id, code, name, first_name, last_name, company, guests FROM reservations WHERE cancelled_at IS NULL ORDER BY COALESCE(NULLIF(company, ''), last_name) ASC, last_name ASC, first_name ASC"
+    "SELECT id, code, name, guests FROM reservations WHERE cancelled_at IS NULL ORDER BY COALESCE(NULLIF(company, ''), last_name) ASC, last_name ASC, first_name ASC"
 )->fetchAll();
 ?>
 <!DOCTYPE html>
@@ -69,7 +85,7 @@ $reservations = $pdo->query(
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>Sitzplan &amp; Reservierungen &ndash; Spitalbierfest Dashboard</title>
+<title><?= $doc['title'] ?> &ndash; Spitalbierfest</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bitter:ital,wght@0,700;0,800&family=Source+Sans+3:ital,wght@0,400;0,600;0,700&display=swap" rel="stylesheet">
@@ -79,6 +95,10 @@ $reservations = $pdo->query(
   .pdf-toolbar button { font: 600 14px/1 var(--sans); padding: 10px 16px; border-radius: 6px; border: 0; background: var(--rust); color: #fff; cursor: pointer; }
   .pdf-toolbar button:hover { background: var(--rust-hover); }
   .pdf-toolbar a { font: 600 14px/1 var(--sans); color: var(--rust); text-decoration: none; }
+  .pdf-toolbar { flex-wrap: wrap; }
+  .pdf-toolbar__label { font: 600 12px/1 var(--sans); text-transform: uppercase; letter-spacing: .04em; color: var(--ink-soft); }
+  .pdf-toolbar a.pdf-doc-link { padding: 9px 14px; border: 1px solid var(--rust); border-radius: 6px; }
+  .pdf-toolbar a.pdf-doc-link.is-active { background: var(--rust); color: #fff; }
 
   .pdf-doc { max-width: 900px; margin: 0 auto; padding: 32px 24px 64px; color: var(--ink); background: #fff; }
   .pdf-header { display: flex; align-items: center; gap: 20px; border-bottom: 3px solid var(--rust); padding-bottom: 16px; margin-bottom: 28px; }
@@ -157,6 +177,12 @@ $reservations = $pdo->query(
     <a href="mail_log.php">E-Mail-Log</a>
   </nav>
   <div class="pdf-toolbar">
+    <span class="pdf-toolbar__label">Dokument</span>
+    <?php foreach ($docs as $key => $d): ?>
+    <a class="pdf-doc-link<?= $key === $docKey ? ' is-active' : '' ?>" href="export.php?doc=<?= e($key) ?>"><?= $d['label'] ?></a>
+    <?php endforeach; ?>
+  </div>
+  <div class="pdf-toolbar">
     <button type="button" onclick="printAs('a4')">Als A4 (Hochformat) drucken</button>
     <button type="button" onclick="printAs('a3')">Als A3 (Querformat) drucken</button>
     <a href="seating.php">&larr; Zur&uuml;ck zum Sitzplan</a>
@@ -185,12 +211,13 @@ function printAs(size) {
   <div class="pdf-header">
     <img src="../assets/logo_spitalbier.svg" alt="Straubinger Spitalbier">
     <div>
-      <h1>Sitzplan &amp; Tischzuweisungen</h1>
+      <h1><?= $doc['title'] ?></h1>
       <div class="pdf-header__sub">Spitalbierfest &ndash; B&uuml;rgerspitalstiftung Straubing &middot; Stand: <?= e((new DateTime('now', $tz))->format('d.m.Y H:i')) ?> Uhr</div>
     </div>
   </div>
 
-  <h2>Sitzplan</h2>
+  <?php if ($show('plan')): ?>
+  <?php if ($multi): ?><h2>Sitzplan</h2><?php endif; ?>
   <div class="pdf-floor">
     <div class="pdf-floor__stage">B&uuml;hne</div>
     <div class="pdf-floor__grid">
@@ -217,8 +244,40 @@ function printAs(size) {
       <?php endforeach; ?>
     </div>
   </div>
+  <?php endif; ?>
 
-  <h2>Tischbelegung im Detail</h2>
+  <?php if ($show('reservations')): ?>
+  <h2>Reservierungen &ndash; Tischzuweisung</h2>
+  <table class="pdf-table">
+    <thead>
+      <tr><th>Name</th><th>Tisch(e)</th><th>Personen</th><th>Code</th></tr>
+    </thead>
+    <tbody>
+      <?php if (!$reservations): ?>
+      <tr><td colspan="4">Noch keine Reservierungen.</td></tr>
+      <?php endif; ?>
+      <?php foreach ($reservations as $r):
+        $assigned = $assignedByReservation[(int) $r['id']] ?? [];
+        $assignedSeats = array_sum(array_column($assigned, 'seats'));
+        $tableLabels = array_map(static fn($a) => $a['code'] . ' (' . (int) $a['seats'] . ')', $assigned);
+        $incomplete = $assignedSeats < (int) $r['guests'];
+      ?>
+      <tr class="<?= $incomplete ? 'pdf-row--warn' : '' ?>">
+        <td><?= e($r['name']) ?></td>
+        <td>
+          <?= $tableLabels ? e(implode(', ', $tableLabels)) : 'nicht zugewiesen' ?>
+          <?php if ($incomplete && $tableLabels): ?> (unvollst&auml;ndig)<?php endif; ?>
+        </td>
+        <td><?= (int) $r['guests'] ?></td>
+        <td><?= e($r['code']) ?></td>
+      </tr>
+      <?php endforeach; ?>
+    </tbody>
+  </table>
+  <?php endif; ?>
+
+  <?php if ($show('detail')): ?>
+  <?php if ($multi): ?><h2>Tischbelegung im Detail</h2><?php endif; ?>
   <?php foreach (['A', 'B', 'C', 'D'] as $label): ?>
   <h3>Reihe <?= e($label) ?></h3>
   <table class="pdf-table">
@@ -246,40 +305,7 @@ function printAs(size) {
     </tbody>
   </table>
   <?php endforeach; ?>
-
-  <h2>Reservierungen &ndash; Tischzuweisung</h2>
-  <table class="pdf-table">
-    <thead>
-      <tr><th>Name</th><th>Tisch(e)</th><th>Personen</th><th>Code</th></tr>
-    </thead>
-    <tbody>
-      <?php if (!$reservations): ?>
-      <tr><td colspan="4">Noch keine Reservierungen.</td></tr>
-      <?php endif; ?>
-      <?php foreach ($reservations as $r):
-        $assigned = $assignedByReservation[(int) $r['id']] ?? [];
-        $assignedSeats = array_sum(array_column($assigned, 'seats'));
-        $tableLabels = array_map(static fn($a) => $a['code'] . ' (' . (int) $a['seats'] . ')', $assigned);
-        $incomplete = $assignedSeats < (int) $r['guests'];
-      ?>
-      <tr class="<?= $incomplete ? 'pdf-row--warn' : '' ?>">
-        <?php
-          // Printed the way the list is sorted: "Nachname, Vorname", or the company.
-          $listName = $r['company'] === '' && $r['first_name'] !== '' && $r['last_name'] !== ''
-              ? $r['last_name'] . ', ' . $r['first_name']
-              : $r['name'];
-        ?>
-        <td><?= e($listName) ?></td>
-        <td>
-          <?= $tableLabels ? e(implode(', ', $tableLabels)) : 'nicht zugewiesen' ?>
-          <?php if ($incomplete && $tableLabels): ?> (unvollst&auml;ndig)<?php endif; ?>
-        </td>
-        <td><?= (int) $r['guests'] ?></td>
-        <td><?= e($r['code']) ?></td>
-      </tr>
-      <?php endforeach; ?>
-    </tbody>
-  </table>
+  <?php endif; ?>
 
 </div>
 
