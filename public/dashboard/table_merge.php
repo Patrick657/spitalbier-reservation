@@ -64,7 +64,7 @@ try {
     }
 
     // Neither table may already be the primary of another merge (keep merges
-    // to simple pairs), and both must currently be empty.
+    // to simple pairs).
     $childCountStmt = $pdo->prepare('SELECT COUNT(*) FROM venue_tables WHERE merged_into IN (:a, :b)');
     $childCountStmt->execute(['a' => $primaryId, 'b' => $neighborId]);
     if ((int) $childCountStmt->fetchColumn() > 0) {
@@ -73,23 +73,34 @@ try {
         exit;
     }
 
-    $occStmt = $pdo->prepare('SELECT table_id, COALESCE(SUM(seats), 0) AS occ FROM table_assignments WHERE table_id IN (:a, :b) GROUP BY table_id');
-    $occStmt->execute(['a' => $primaryId, 'b' => $neighborId]);
-    foreach ($occStmt->fetchAll() as $row) {
-        if ((int) $row['occ'] > 0) {
-            $pdo->rollBack();
-            header('Location: ' . $back . '&msg=not_empty');
-            exit;
-        }
-    }
-
-    $newSeats = (int) $primary['base_seats'] + (int) $neighbor['base_seats'];
+    // Keep any manually added chairs: the merged table offers the current
+    // capacity of both, so existing assignments always still fit.
+    $newSeats = (int) $primary['seats'] + (int) $neighbor['seats'];
 
     $updatePrimary = $pdo->prepare('UPDATE venue_tables SET seats = :seats WHERE id = :id');
     $updatePrimary->execute(['seats' => $newSeats, 'id' => $primaryId]);
 
     $updateNeighbor = $pdo->prepare('UPDATE venue_tables SET seats = 0, merged_into = :primary WHERE id = :id');
     $updateNeighbor->execute(['primary' => $primaryId, 'id' => $neighborId]);
+
+    // Guests already seated at the neighbor move over to the merged table.
+    $moveStmt = $pdo->prepare('UPDATE table_assignments SET table_id = :primary WHERE table_id = :neighbor');
+    $moveStmt->execute(['primary' => $primaryId, 'neighbor' => $neighborId]);
+
+    // A reservation that was split across both tables becomes one entry.
+    $dupStmt = $pdo->prepare(
+        'SELECT reservation_id, MIN(id) AS keep_id, SUM(seats) AS total
+         FROM table_assignments
+         WHERE table_id = :id AND reservation_id IS NOT NULL
+         GROUP BY reservation_id HAVING COUNT(*) > 1'
+    );
+    $dupStmt->execute(['id' => $primaryId]);
+    $keepStmt = $pdo->prepare('UPDATE table_assignments SET seats = :seats WHERE id = :id');
+    $dropStmt = $pdo->prepare('DELETE FROM table_assignments WHERE table_id = :table AND reservation_id = :res AND id <> :keep');
+    foreach ($dupStmt->fetchAll() as $dup) {
+        $keepStmt->execute(['seats' => (int) $dup['total'], 'id' => $dup['keep_id']]);
+        $dropStmt->execute(['table' => $primaryId, 'res' => $dup['reservation_id'], 'keep' => $dup['keep_id']]);
+    }
 
     $pdo->commit();
     header('Location: ' . $back . '&msg=merged');

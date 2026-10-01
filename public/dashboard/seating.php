@@ -19,11 +19,6 @@ function e(string $v): string
 
 $tables = $pdo->query('SELECT id, code, row_label, position, seats, base_seats, merged_into FROM venue_tables ORDER BY row_label, position')->fetchAll();
 
-$tablesById = [];
-foreach ($tables as $t) {
-    $tablesById[(int) $t['id']] = $t;
-}
-
 // primaryId => list of tables merged into it (for "undo merge" + display)
 $mergedChildrenByPrimary = [];
 foreach ($tables as $t) {
@@ -122,8 +117,7 @@ if ($selected) {
     foreach ($rowsByLabel[$selected['row_label']] ?? [] as $t) {
         $isAdjacent = abs((int) $t['position'] - (int) $selected['position']) === 1;
         $isStandalone = $t['merged_into'] === null && empty($mergedChildrenByPrimary[(int) $t['id']]);
-        $isEmpty = ($occupiedByTable[(int) $t['id']] ?? 0) === 0;
-        if ($isAdjacent && $isStandalone && $isEmpty) {
+        if ($isAdjacent && $isStandalone) {
             $neighborCandidates[] = $t;
         }
     }
@@ -149,7 +143,7 @@ $flashes = [
     'seats_updated' => ['type' => 'ok', 'text' => 'Platzzahl aktualisiert.'],
     'merged' => ['type' => 'ok', 'text' => 'Tische zusammengelegt.'],
     'unmerged' => ['type' => 'ok', 'text' => 'Zusammenlegung aufgehoben.'],
-    'not_empty' => ['type' => 'error', 'text' => 'Dazu müssen beide Tische leer sein (keine Zuweisungen).'],
+    'not_empty' => ['type' => 'error', 'text' => 'Zum Aufheben muss der Tisch leer sein (keine Zuweisungen).'],
     'below_occupied' => ['type' => 'error', 'text' => 'Die Platzzahl kann nicht unter die bereits belegten Plätze gesenkt werden.'],
 ];
 $flash = isset($_GET['msg']) ? ($flashes[$_GET['msg']] ?? null) : null;
@@ -202,17 +196,11 @@ $flash = isset($_GET['msg']) ? ($flashes[$_GET['msg']] ?? null) : null;
         <?php foreach (['A', 'B', 'C', 'D'] as $label): ?>
         <div class="seating-row">
           <?php foreach ($rowsByLabel[$label] ?? [] as $t):
-            if ($t['merged_into'] !== null):
-              $primaryCode = $tablesById[(int) $t['merged_into']]['code'] ?? '?';
-          ?>
-          <a class="table-tile table-tile--merged" href="?table=<?= (int) $t['merged_into'] ?>" title="Zusammengelegt mit <?= e($primaryCode) ?>">
-            <div class="table-tile__code"><?= e($t['code']) ?></div>
-            <div class="table-tile__merged-note">&rarr; <?= e($primaryCode) ?></div>
-          </a>
-          <?php
+            // Merged-away tables are part of their primary's wide tile.
+            if ($t['merged_into'] !== null) {
               continue;
-            endif;
-            $occupied = $occupiedByTable[(int) $t['id']] ?? 0;
+            }
+            $tileOccupied = $occupiedByTable[(int) $t['id']] ?? 0;
             $seats = (int) $t['seats'];
             $halfSeats = (int) ceil($seats / 2);
             $isSelected = $selected && (int) $selected['id'] === (int) $t['id'];
@@ -224,17 +212,17 @@ $flash = isset($_GET['msg']) ? ($flashes[$_GET['msg']] ?? null) : null;
             <div class="table-tile__shape">
               <div class="table-tile__chairs">
                 <?php for ($i = 0; $i < $halfSeats; $i++): ?>
-                <span class="chair<?= $i < $occupied ? ' is-occupied' : '' ?>"></span>
+                <span class="chair<?= $i < $tileOccupied ? ' is-occupied' : '' ?>"></span>
                 <?php endfor; ?>
               </div>
               <div class="table-tile__rect"></div>
               <div class="table-tile__chairs">
                 <?php for ($i = $halfSeats; $i < $seats; $i++): ?>
-                <span class="chair<?= $i < $occupied ? ' is-occupied' : '' ?>"></span>
+                <span class="chair<?= $i < $tileOccupied ? ' is-occupied' : '' ?>"></span>
                 <?php endfor; ?>
               </div>
             </div>
-            <div class="table-tile__count"><?= $occupied ?>/<?= $seats ?></div>
+            <div class="table-tile__count"><?= $tileOccupied ?>/<?= $seats ?></div>
           </a>
           <?php endforeach; ?>
         </div>
@@ -348,7 +336,7 @@ $flash = isset($_GET['msg']) ? ($flashes[$_GET['msg']] ?? null) : null;
           <?php else: ?>
           <p class="assign-panel__hint">Zum Aufheben muss der Tisch erst leer sein.</p>
           <?php endif; ?>
-          <?php elseif ($occupied === 0 && $neighborCandidates): ?>
+          <?php elseif ($neighborCandidates): ?>
           <form method="post" action="table_merge.php" class="assign-form">
             <input type="hidden" name="table_id" value="<?= (int) $selected['id'] ?>">
             <input type="hidden" name="csrf" value="<?= e($csrf) ?>">
@@ -356,13 +344,13 @@ $flash = isset($_GET['msg']) ? ($flashes[$_GET['msg']] ?? null) : null;
               <select name="neighbor_id" required>
                 <option value="">&mdash; ausw&auml;hlen &mdash;</option>
                 <?php foreach ($neighborCandidates as $n): ?>
-                <option value="<?= (int) $n['id'] ?>"><?= e($n['code']) ?> (+<?= (int) $n['base_seats'] ?> Pl&auml;tze)</option>
+                <option value="<?= (int) $n['id'] ?>"><?= e($n['code']) ?> (+<?= (int) $n['seats'] ?> Pl&auml;tze)</option>
                 <?php endforeach; ?>
               </select>
             </label>
             <button type="submit" class="dash-btn-edit">Zusammenlegen</button>
           </form>
-          <?php elseif ($occupied === 0): ?>
+          <?php else: ?>
           <p class="assign-panel__hint">Kein freier Nachbartisch zum Zusammenlegen verf&uuml;gbar.</p>
           <?php endif; ?>
 

@@ -224,6 +224,70 @@ body {
 .table-tile--wide .table-tile__rect { max-width: 120px; }
 .table-tile--wide .table-tile__chairs { flex-wrap: wrap; max-width: 120px; justify-content: center; }
 
+.chair { width: 14px; height: 11px; }
+
+.seating-layout {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.seating-grid-wrap {
+  background: var(--parchment);
+  border: 1px solid #ddceb2;
+  border-radius: 6px;
+  padding: 20px;
+}
+
+.seating-floor { display: flex; gap: 18px; align-items: stretch; }
+
+.stage {
+  flex: 0 0 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: repeating-linear-gradient(45deg, #cbb894, #cbb894 6px, #ddceb2 6px, #ddceb2 12px);
+  border: 2px solid #b89a68;
+  border-radius: 6px;
+}
+.stage span {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font: 700 13px/1 var(--serif);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: #5a4830;
+  white-space: nowrap;
+}
+
+.seating-grid { flex: 1; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.seating-row { display: flex; gap: 6px; }
+
+.table-tile {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 5px 2px;
+  border-radius: 6px;
+  text-decoration: none;
+  cursor: pointer;
+}
+.table-tile:hover { background: rgba(122, 59, 29, .08); }
+.table-tile.is-selected { background: rgba(122, 59, 29, .14); box-shadow: 0 0 0 2px var(--rust); }
+.table-tile__code { font: 700 10px/1 var(--sans); color: var(--ink); }
+.table-tile__shape { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.table-tile__chairs { display: flex; gap: 2px; }
+.table-tile__rect { width: 100%; max-width: 58px; height: 20px; background: #d8c39a; border: 1px solid #b89a68; border-radius: 2px; }
+.table-tile__count { font: 600 9.5px/1 var(--sans); color: #7a6647; }
+
+.table-tile--wide { flex-grow: 2; }
+.table-tile--wide .table-tile__rect { max-width: 120px; }
+.table-tile--wide .table-tile__chairs { flex-wrap: wrap; max-width: 120px; justify-content: center; }
+
 .table-tile--merged {
   opacity: .55;
   justify-content: center;
