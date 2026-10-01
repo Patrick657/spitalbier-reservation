@@ -60,7 +60,7 @@ foreach ($pdo->query(
 }
 
 $reservations = $pdo->query(
-    "SELECT id, code, name, guests FROM reservations WHERE cancelled_at IS NULL ORDER BY name ASC"
+    "SELECT id, code, name, first_name, last_name, company, guests FROM reservations WHERE cancelled_at IS NULL ORDER BY COALESCE(NULLIF(company, ''), last_name) ASC, last_name ASC, first_name ASC"
 )->fetchAll();
 ?>
 <!DOCTYPE html>
@@ -250,7 +250,7 @@ function printAs(size) {
   <h2>Reservierungen &ndash; Tischzuweisung</h2>
   <table class="pdf-table">
     <thead>
-      <tr><th>Name</th><th>Code</th><th>Personen</th><th>Tisch(e)</th></tr>
+      <tr><th>Name</th><th>Tisch(e)</th><th>Personen</th><th>Code</th></tr>
     </thead>
     <tbody>
       <?php if (!$reservations): ?>
@@ -263,13 +263,19 @@ function printAs(size) {
         $incomplete = $assignedSeats < (int) $r['guests'];
       ?>
       <tr class="<?= $incomplete ? 'pdf-row--warn' : '' ?>">
-        <td><?= e($r['name']) ?></td>
-        <td><?= e($r['code']) ?></td>
-        <td><?= (int) $r['guests'] ?></td>
+        <?php
+          // Printed the way the list is sorted: "Nachname, Vorname", or the company.
+          $listName = $r['company'] === '' && $r['first_name'] !== '' && $r['last_name'] !== ''
+              ? $r['last_name'] . ', ' . $r['first_name']
+              : $r['name'];
+        ?>
+        <td><?= e($listName) ?></td>
         <td>
           <?= $tableLabels ? e(implode(', ', $tableLabels)) : 'nicht zugewiesen' ?>
           <?php if ($incomplete && $tableLabels): ?> (unvollst&auml;ndig)<?php endif; ?>
         </td>
+        <td><?= (int) $r['guests'] ?></td>
+        <td><?= e($r['code']) ?></td>
       </tr>
       <?php endforeach; ?>
     </tbody>

@@ -5,6 +5,7 @@ session_start();
 require_once __DIR__ . '/../../src/config.php';
 require_once __DIR__ . '/../../src/db.php';
 require_once __DIR__ . '/../../src/MailLog.php';
+require_once __DIR__ . '/../../src/names.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: new.php');
@@ -23,7 +24,12 @@ $cfg = sbf_config();
 // and every submission would fail validation.
 $maxGuests = (int) ($cfg['admin_max_guests_per_reservation'] ?? 60);
 
-$name = trim((string) ($_POST['name'] ?? ''));
+$firstName = trim((string) ($_POST['first_name'] ?? ''));
+$lastName = trim((string) ($_POST['last_name'] ?? ''));
+$company = trim((string) ($_POST['company'] ?? ''));
+$name = sbf_display_name($firstName, $lastName, $company);
+// Mails greet the contact person, or the company when no person is given.
+$greetName = sbf_person_name($firstName, $lastName) ?: $company;
 $email = trim((string) ($_POST['email'] ?? ''));
 $phone = trim((string) ($_POST['phone'] ?? ''));
 $guests = filter_var($_POST['guests'] ?? null, FILTER_VALIDATE_INT);
@@ -33,7 +39,7 @@ $sendMail = isset($_POST['send_mail']);
 $adminNote = trim((string) ($_POST['admin_note'] ?? ''));
 
 $reason = null;
-if ($name === '' || mb_strlen($name) > 190) {
+if ($name === '' || mb_strlen($lastName) > 99 || mb_strlen($firstName) > 90 || mb_strlen($company) > 120) {
     $reason = 'name';
 } elseif ($email !== '' && (!filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 190)) {
     $reason = 'email';
@@ -65,12 +71,15 @@ try {
     $code = 'SBF-' . random_int(1000, 9999);
 
     $insert = $pdo->prepare(
-        'INSERT INTO reservations (code, name, email, phone, guests, newsletter, dsgvo_consent_at, created_at, admin_note, source)
-         VALUES (:code, :name, :email, :phone, :guests, :newsletter, NOW(), NOW(), :note, :source)'
+        'INSERT INTO reservations (code, name, first_name, last_name, company, email, phone, guests, newsletter, dsgvo_consent_at, created_at, admin_note, source)
+         VALUES (:code, :name, :first_name, :last_name, :company, :email, :phone, :guests, :newsletter, NOW(), NOW(), :note, :source)'
     );
     $insert->execute([
         'code' => $code,
         'name' => $name,
+        'first_name' => $firstName,
+        'last_name' => $lastName,
+        'company' => $company,
         'email' => $email,
         'phone' => $phone !== '' ? $phone : null,
         'guests' => $guests,
@@ -113,7 +122,7 @@ if ($sendMail && $email !== '') {
             );
 
             $subject = 'Ihre Reservierung zum Spitalbierfest – ' . $code;
-            $text = "Vergelt's Gott, {$name}!\n\n"
+            $text = "Vergelt's Gott, {$greetName}!\n\n"
                 . "wir haben {$guests} Plätze für Sie zum 1. Straubinger Spitalbierfest vorgemerkt.\n\n"
                 . "Reservierungsnummer: {$code}\n"
                 . "Termin: Freitag, 30. Oktober 2026, 18:00 Uhr\n"
@@ -121,7 +130,7 @@ if ($sendMail && $email !== '') {
                 . "Ihre Tische werden bis 18:30 Uhr freigehalten, danach entfallen nicht angetretene Reservierungen.\n\n"
                 . "Fragen? stiftungsamt@straubing.de\n\n"
                 . "Bürgerspitalstiftung Straubing";
-            $html = '<p>Vergelt&rsquo;s Gott, ' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '!</p>'
+            $html = '<p>Vergelt&rsquo;s Gott, ' . htmlspecialchars($greetName, ENT_QUOTES, 'UTF-8') . '!</p>'
                 . '<p>wir haben <strong>' . $guests . ' Plätze</strong> für Sie zum 1. Straubinger Spitalbierfest vorgemerkt.</p>'
                 . '<p>Reservierungsnummer: <strong>' . htmlspecialchars($code, ENT_QUOTES, 'UTF-8') . '</strong><br>'
                 . 'Termin: Freitag, 30. Oktober 2026, 18:00 Uhr<br>'

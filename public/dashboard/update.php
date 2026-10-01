@@ -5,6 +5,7 @@ session_start();
 require_once __DIR__ . '/../../src/config.php';
 require_once __DIR__ . '/../../src/db.php';
 require_once __DIR__ . '/../../src/MailLog.php';
+require_once __DIR__ . '/../../src/names.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: index.php');
@@ -23,7 +24,12 @@ if (!$id || !hash_equals($_SESSION['csrf'] ?? '', $csrf)) {
 $cfg = sbf_config();
 $maxGuests = (int) ($cfg['admin_max_guests_per_reservation'] ?? 60);
 
-$name = trim((string) ($_POST['name'] ?? ''));
+$firstName = trim((string) ($_POST['first_name'] ?? ''));
+$lastName = trim((string) ($_POST['last_name'] ?? ''));
+$company = trim((string) ($_POST['company'] ?? ''));
+$name = sbf_display_name($firstName, $lastName, $company);
+// Mails greet the contact person, or the company when no person is given.
+$greetName = sbf_person_name($firstName, $lastName) ?: $company;
 $email = trim((string) ($_POST['email'] ?? ''));
 $phone = trim((string) ($_POST['phone'] ?? ''));
 $guests = filter_var($_POST['guests'] ?? null, FILTER_VALIDATE_INT);
@@ -32,7 +38,7 @@ $sendMail = isset($_POST['send_mail']);
 $adminNote = trim((string) ($_POST['admin_note'] ?? ''));
 
 $reason = null;
-if ($name === '' || mb_strlen($name) > 190) {
+if ($name === '' || mb_strlen($lastName) > 99 || mb_strlen($firstName) > 90 || mb_strlen($company) > 120) {
     $reason = 'name';
 } elseif ($email !== '' && (!filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 190)) {
     $reason = 'email';
@@ -88,12 +94,15 @@ try {
 
     $update = $pdo->prepare(
         'UPDATE reservations
-         SET name = :name, email = :email, phone = :phone, guests = :guests,
+         SET name = :name, first_name = :first_name, last_name = :last_name, company = :company, email = :email, phone = :phone, guests = :guests,
              newsletter = :newsletter, admin_note = :note
          WHERE id = :id'
     );
     $update->execute([
         'name' => $name,
+        'first_name' => $firstName,
+        'last_name' => $lastName,
+        'company' => $company,
         'email' => $email,
         'phone' => $phone !== '' ? $phone : null,
         'guests' => $guests,
@@ -132,13 +141,13 @@ if ($sendMail && $email !== '') {
             );
 
             $subject = 'Ihre Reservierung zum Spitalbierfest wurde aktualisiert';
-            $text = "Vergelt's Gott, {$name}!\n\n"
+            $text = "Vergelt's Gott, {$greetName}!\n\n"
                 . "Ihre Reservierung zum 1. Straubinger Spitalbierfest wurde aktualisiert: aktuell {$guests} Plätze.\n\n"
                 . "Termin: Freitag, 30. Oktober 2026, 18:00 Uhr\n"
                 . "Ort: Rittersaal im Herzogschloss, Straubing\n\n"
                 . "Fragen? stiftungsamt@straubing.de\n\n"
                 . "Bürgerspitalstiftung Straubing";
-            $html = '<p>Vergelt&rsquo;s Gott, ' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '!</p>'
+            $html = '<p>Vergelt&rsquo;s Gott, ' . htmlspecialchars($greetName, ENT_QUOTES, 'UTF-8') . '!</p>'
                 . '<p>Ihre Reservierung zum 1. Straubinger Spitalbierfest wurde aktualisiert: aktuell <strong>' . $guests . ' Plätze</strong>.</p>'
                 . '<p>Termin: Freitag, 30. Oktober 2026, 18:00 Uhr<br>Ort: Rittersaal im Herzogschloss, Straubing</p>'
                 . '<p>Fragen? <a href="mailto:stiftungsamt@straubing.de">stiftungsamt@straubing.de</a></p>'

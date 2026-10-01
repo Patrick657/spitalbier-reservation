@@ -4,6 +4,7 @@ session_start();
 
 require_once __DIR__ . '/../../src/config.php';
 require_once __DIR__ . '/../../src/db.php';
+require_once __DIR__ . '/../../src/names.php';
 
 if (empty($_SESSION['csrf'])) {
     $_SESSION['csrf'] = bin2hex(random_bytes(32));
@@ -65,15 +66,15 @@ foreach ($pdo->query(
 $openReservations = [];
 $assignedReservations = [];
 foreach ($pdo->query(
-    'SELECT id, code, name, guests, admin_note FROM reservations WHERE cancelled_at IS NULL ORDER BY created_at ASC'
+    'SELECT id, code, name, first_name, last_name, company, guests, admin_note FROM reservations WHERE cancelled_at IS NULL ORDER BY created_at ASC'
 )->fetchAll() as $r) {
     $tablesForRes = $assignmentsByReservation[(int) $r['id']] ?? [];
     $assignedSeats = array_sum(array_column($tablesForRes, 'seats'));
     if ($tablesForRes && $assignedSeats >= (int) $r['guests']) {
-        $assignedReservations[] = ['name' => $r['name'], 'code' => $r['code'], 'tables' => $tablesForRes];
+        $assignedReservations[] = ['nameHtml' => sbf_name_html($r), 'code' => $r['code'], 'tables' => $tablesForRes];
     } else {
         $openReservations[] = [
-            'name' => $r['name'],
+            'nameHtml' => sbf_name_html($r),
             'code' => $r['code'],
             'guests' => (int) $r['guests'],
             'assignedSeats' => $assignedSeats,
@@ -375,7 +376,7 @@ $flash = isset($_GET['msg']) ? ($flashes[$_GET['msg']] ?? null) : null;
             <tr>
               <td><?= e($r['code']) ?></td>
               <td>
-                <?= e($r['name']) ?>
+                <?= $r['nameHtml'] ?>
                 <?php if (!empty($r['adminNote'])): ?><br><span class="dash-note">Notiz: <?= e($r['adminNote']) ?></span><?php endif; ?>
               </td>
               <td><?= (int) $r['guests'] ?></td>
@@ -401,7 +402,7 @@ $flash = isset($_GET['msg']) ? ($flashes[$_GET['msg']] ?? null) : null;
             <?php foreach ($assignedReservations as $r): ?>
             <tr>
               <td><?= e($r['code']) ?></td>
-              <td><?= e($r['name']) ?></td>
+              <td><?= $r['nameHtml'] ?></td>
               <td><?= e(implode(', ', array_map(fn($t) => $t['code'] . ' (' . $t['seats'] . ')', $r['tables']))) ?></td>
             </tr>
             <?php endforeach; ?>

@@ -34,7 +34,7 @@ $seatsTaken = (int) $pdo->query('SELECT seats_taken FROM capacity_counter WHERE 
 $seatsLeft = max(0, $cap - $seatsTaken);
 
 $reasonTexts = [
-    'name' => 'Bitte einen Namen angeben (max. 190 Zeichen).',
+    'name' => 'Bitte eine Firma oder einen Namen angeben (Firma max. 120, Vorname max. 90, Nachname max. 99 Zeichen).',
     'email' => 'Die E-Mail-Adresse ist ungültig oder zu lang.',
     'guests' => "Bitte eine Personenzahl zwischen 1 und {$maxGuests} angeben.",
     'guests_below_assigned' => "Die Personenzahl kann nicht unter die bereits im Sitzplan zugewiesenen {$assignedSeats} Plätze gesenkt werden. Bitte zuerst die Tischzuweisung anpassen.",
@@ -108,8 +108,16 @@ if (isset($_GET['msg'])) {
       <input type="hidden" name="id" value="<?= (int) $reservation['id'] ?>">
       <input type="hidden" name="csrf" value="<?= e($csrf) ?>">
 
-      <label>Name
-        <input type="text" name="name" required maxlength="190" value="<?= e($reservation['name']) ?>">
+      <label>Firma / Gruppe
+        <input type="text" name="company" maxlength="120" value="<?= e($reservation['company']) ?>" placeholder="alternativ oder zus&auml;tzlich zum Namen">
+      </label>
+
+      <label>Vorname
+        <input type="text" name="first_name" maxlength="90" value="<?= e($reservation['first_name']) ?>">
+      </label>
+
+      <label>Nachname
+        <input type="text" name="last_name" maxlength="99" value="<?= e($reservation['last_name']) ?>">
       </label>
 
       <label>E-Mail (optional)

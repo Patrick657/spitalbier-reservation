@@ -97,10 +97,20 @@
         </div>
 
         <div class="form-grid">
+          <label class="field field--wide">
+            Firma / Verein
+            <input type="text" id="company" name="company" placeholder="optional &ndash; alternativ zu Vor- und Nachname" autocomplete="organization">
+            <span class="field__error" id="err-company"></span>
+          </label>
           <label class="field">
-            Name
-            <input type="text" id="name" name="name" placeholder="Vor- und Nachname" autocomplete="name">
-            <span class="field__error" id="err-name"></span>
+            Vorname
+            <input type="text" id="firstName" name="first_name" autocomplete="given-name">
+            <span class="field__error" id="err-first-name"></span>
+          </label>
+          <label class="field">
+            Nachname
+            <input type="text" id="lastName" name="last_name" autocomplete="family-name">
+            <span class="field__error" id="err-last-name"></span>
           </label>
           <label class="field">
             E-Mail

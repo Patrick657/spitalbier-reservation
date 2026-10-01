@@ -24,7 +24,7 @@ function e(string $v): string
 }
 
 $reasonTexts = [
-    'name' => 'Bitte einen Namen angeben (max. 190 Zeichen).',
+    'name' => 'Bitte eine Firma oder einen Namen angeben (Firma max. 120, Vorname max. 90, Nachname max. 99 Zeichen).',
     'email' => 'Die E-Mail-Adresse ist ungültig oder zu lang.',
     'guests' => "Bitte eine Personenzahl zwischen 1 und {$maxGuests} angeben.",
     'dsgvo' => 'Bitte bestätigen, dass die Einwilligung zur Datenspeicherung vorliegt.',
@@ -86,8 +86,16 @@ if (isset($_GET['msg'])) {
     <form method="post" action="create.php" class="assign-form">
       <input type="hidden" name="csrf" value="<?= e($csrf) ?>">
 
-      <label>Name
-        <input type="text" name="name" required maxlength="190" placeholder="Vor- und Nachname oder Gruppenbezeichnung">
+      <label>Firma / Gruppe
+        <input type="text" name="company" maxlength="120" placeholder="alternativ oder zus&auml;tzlich zum Namen">
+      </label>
+
+      <label>Vorname
+        <input type="text" name="first_name" maxlength="90">
+      </label>
+
+      <label>Nachname
+        <input type="text" name="last_name" maxlength="99">
       </label>
 
       <label>E-Mail (optional)

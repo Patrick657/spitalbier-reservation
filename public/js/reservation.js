@@ -8,7 +8,9 @@
 
   var form = document.getElementById("reservationForm");
   var confirmation = document.getElementById("confirmation");
-  var nameInput = document.getElementById("name");
+  var companyInput = document.getElementById("company");
+  var firstNameInput = document.getElementById("firstName");
+  var lastNameInput = document.getElementById("lastName");
   var emailInput = document.getElementById("email");
   var phoneInput = document.getElementById("phone");
   var dsgvoInput = document.getElementById("dsgvo");
@@ -17,7 +19,9 @@
   var guestsValueEl = document.getElementById("guestsValue");
   var guestsMinusBtn = document.getElementById("guestsMinus");
   var guestsPlusBtn = document.getElementById("guestsPlus");
-  var errName = document.getElementById("err-name");
+  var errCompany = document.getElementById("err-company");
+  var errFirstName = document.getElementById("err-first-name");
+  var errLastName = document.getElementById("err-last-name");
   var errEmail = document.getElementById("err-email");
   var errDsgvo = document.getElementById("err-dsgvo");
   var banner = document.getElementById("formBanner");
@@ -95,7 +99,9 @@
   }
 
   function clearErrors() {
-    errName.textContent = "";
+    errCompany.textContent = "";
+    errFirstName.textContent = "";
+    errLastName.textContent = "";
     errEmail.textContent = "";
     errDsgvo.textContent = "";
     hideBanner();
@@ -103,7 +109,11 @@
 
   function validateClientSide() {
     var err = {};
-    if (!nameInput.value.trim()) err.name = "Bitte Namen angeben.";
+    // A company name may stand in for the person.
+    if (!companyInput.value.trim()) {
+      if (!firstNameInput.value.trim()) err.first_name = "Bitte Vornamen angeben.";
+      if (!lastNameInput.value.trim()) err.last_name = "Bitte Nachnamen angeben.";
+    }
     if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(emailInput.value.trim())) {
       err.email = "Bitte gültige E-Mail-Adresse angeben.";
     }
@@ -137,7 +147,7 @@
     renderGuests();
   });
 
-  [nameInput, emailInput, dsgvoInput].forEach(function (el) {
+  [companyInput, firstNameInput, lastNameInput, emailInput, dsgvoInput].forEach(function (el) {
     el.addEventListener("input", clearErrors);
     el.addEventListener("change", clearErrors);
   });
@@ -147,7 +157,8 @@
 
     var err = validateClientSide();
     clearErrors();
-    if (err.name) errName.textContent = err.name;
+    if (err.first_name) errFirstName.textContent = err.first_name;
+    if (err.last_name) errLastName.textContent = err.last_name;
     if (err.email) errEmail.textContent = err.email;
     if (err.dsgvo) errDsgvo.textContent = err.dsgvo;
     if (Object.keys(err).length) return;
@@ -159,7 +170,9 @@
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        name: nameInput.value.trim(),
+        company: companyInput.value.trim(),
+        first_name: firstNameInput.value.trim(),
+        last_name: lastNameInput.value.trim(),
         email: emailInput.value.trim(),
         phone: phoneInput.value.trim(),
         guests: guests,
@@ -179,7 +192,9 @@
           }
           var shown = false;
           if (data.errors) {
-            if (data.errors.name) { errName.textContent = data.errors.name; shown = true; }
+            if (data.errors.company) { errCompany.textContent = data.errors.company; shown = true; }
+            if (data.errors.first_name) { errFirstName.textContent = data.errors.first_name; shown = true; }
+            if (data.errors.last_name) { errLastName.textContent = data.errors.last_name; shown = true; }
             if (data.errors.email) { errEmail.textContent = data.errors.email; shown = true; }
             if (data.errors.dsgvo) { errDsgvo.textContent = data.errors.dsgvo; shown = true; }
             if (data.errors.guests) { showBanner(data.errors.guests); shown = true; }
@@ -193,7 +208,7 @@
         setSeats(data.seatsLeft, data.seatPct, null);
 
         document.getElementById("confirmGuests").textContent = guests + " Plätze";
-        document.getElementById("confirmName").textContent = nameInput.value.trim();
+        document.getElementById("confirmName").textContent = companyInput.value.trim() || (firstNameInput.value.trim() + " " + lastNameInput.value.trim());
         document.getElementById("confirmEmail").textContent = emailInput.value.trim();
         document.getElementById("confirmCode").textContent = data.code;
 

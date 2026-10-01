@@ -4,6 +4,7 @@ session_start();
 
 require_once __DIR__ . '/../../src/config.php';
 require_once __DIR__ . '/../../src/db.php';
+require_once __DIR__ . '/../../src/names.php';
 
 $cfg = sbf_config();
 $cap = $cfg['capacity'];
@@ -31,7 +32,7 @@ $seatsTaken = (int) $pdo->query('SELECT seats_taken FROM capacity_counter WHERE 
 $occupancyPct = $cap > 0 ? round(($seatsTaken / $cap) * 100, 1) : 0.0;
 
 $rows = $pdo->query(
-    'SELECT id, code, name, email, phone, guests, newsletter, created_at, cancelled_at, admin_note, source
+    'SELECT id, code, name, first_name, last_name, company, email, phone, guests, newsletter, created_at, cancelled_at, admin_note, source
      FROM reservations ORDER BY created_at DESC'
 )->fetchAll();
 
@@ -144,7 +145,7 @@ function e(string $v): string
         <tr class="<?= $cancelled ? 'is-cancelled' : '' ?>">
           <td><?= e($r['code']) ?></td>
           <td>
-            <?= e($r['name']) ?>
+            <?= sbf_name_html($r) ?>
             <?php if (!empty($r['admin_note'])): ?><br><span class="dash-note">Notiz: <?= e($r['admin_note']) ?></span><?php endif; ?>
           </td>
           <td><?php if ($r['email'] !== ''): ?><a href="mailto:<?= e($r['email']) ?>"><?= e($r['email']) ?></a><?php else: ?>&ndash;<?php endif; ?></td>

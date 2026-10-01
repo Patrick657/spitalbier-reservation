@@ -6,6 +6,7 @@ header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/../../src/config.php';
 require_once __DIR__ . '/../../src/db.php';
 require_once __DIR__ . '/../../src/MailLog.php';
+require_once __DIR__ . '/../../src/names.php';
 
 function sbf_json_error(int $status, string $message, array $errors = []): void
 {
@@ -34,7 +35,12 @@ $cfg = sbf_config();
 $maxGuests = $cfg['max_guests_per_reservation'];
 $cap = $cfg['capacity'];
 
-$name = trim((string) ($input['name'] ?? ''));
+$firstName = trim((string) ($input['first_name'] ?? ''));
+$lastName = trim((string) ($input['last_name'] ?? ''));
+$company = trim((string) ($input['company'] ?? ''));
+$name = sbf_display_name($firstName, $lastName, $company);
+// Mails greet the contact person, or the company when no person is given.
+$greetName = sbf_person_name($firstName, $lastName) ?: $company;
 $email = trim((string) ($input['email'] ?? ''));
 $phone = trim((string) ($input['phone'] ?? ''));
 $dsgvo = filter_var($input['dsgvo'] ?? false, FILTER_VALIDATE_BOOLEAN);
@@ -43,10 +49,22 @@ $guests = filter_var($input['guests'] ?? null, FILTER_VALIDATE_INT);
 
 $errors = [];
 
-if ($name === '') {
-    $errors['name'] = 'Bitte Namen angeben.';
-} elseif (mb_strlen($name) > 190) {
-    $errors['name'] = 'Name ist zu lang.';
+// A company name may stand in for the person; without one, both first and
+// last name are required.
+if ($firstName === '' && $company === '') {
+    $errors['first_name'] = 'Bitte Vornamen angeben.';
+} elseif (mb_strlen($firstName) > 90) {
+    $errors['first_name'] = 'Vorname ist zu lang.';
+}
+
+if ($lastName === '' && $company === '') {
+    $errors['last_name'] = 'Bitte Nachnamen angeben.';
+} elseif (mb_strlen($lastName) > 99) {
+    $errors['last_name'] = 'Nachname ist zu lang.';
+}
+
+if (mb_strlen($company) > 120) {
+    $errors['company'] = 'Firmenname ist zu lang.';
 }
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -96,12 +114,15 @@ try {
     $code = 'SBF-' . random_int(1000, 9999);
 
     $insert = $pdo->prepare(
-        'INSERT INTO reservations (code, name, email, phone, guests, newsletter, dsgvo_consent_at, created_at)
-         VALUES (:code, :name, :email, :phone, :guests, :newsletter, NOW(), NOW())'
+        'INSERT INTO reservations (code, name, first_name, last_name, company, email, phone, guests, newsletter, dsgvo_consent_at, created_at)
+         VALUES (:code, :name, :first_name, :last_name, :company, :email, :phone, :guests, :newsletter, NOW(), NOW())'
     );
     $insert->execute([
         'code' => $code,
         'name' => $name,
+        'first_name' => $firstName,
+        'last_name' => $lastName,
+        'company' => $company,
         'email' => $email,
         'phone' => $phone !== '' ? $phone : null,
         'guests' => $guests,
@@ -142,7 +163,7 @@ try {
         );
 
         $subject = 'Ihre Reservierung zum Spitalbierfest – ' . $code;
-        $text = "Vergelt's Gott, {$name}!\n\n"
+        $text = "Vergelt's Gott, {$greetName}!\n\n"
             . "wir haben {$guests} Plätze für Sie zum 1. Straubinger Spitalbierfest vorgemerkt.\n\n"
             . "Reservierungsnummer: {$code}\n"
             . "Termin: Freitag, 30. Oktober 2026, 18:00 Uhr\n"
@@ -150,7 +171,7 @@ try {
             . "Ihre Tische werden bis 18:30 Uhr freigehalten, danach entfallen nicht angetretene Reservierungen.\n\n"
             . "Fragen? stiftungsamt@straubing.de\n\n"
             . "Bürgerspitalstiftung Straubing";
-        $html = '<p>Vergelt&rsquo;s Gott, ' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '!</p>'
+        $html = '<p>Vergelt&rsquo;s Gott, ' . htmlspecialchars($greetName, ENT_QUOTES, 'UTF-8') . '!</p>'
             . '<p>wir haben <strong>' . $guests . ' Plätze</strong> für Sie zum 1. Straubinger Spitalbierfest vorgemerkt.</p>'
             . '<p>Reservierungsnummer: <strong>' . htmlspecialchars($code, ENT_QUOTES, 'UTF-8') . '</strong><br>'
             . 'Termin: Freitag, 30. Oktober 2026, 18:00 Uhr<br>'

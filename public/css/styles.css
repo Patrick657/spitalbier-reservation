@@ -313,6 +313,7 @@ h3, h4 { font-family: var(--sans); color: var(--ink); margin: 0; }
   gap: 13px;
   margin-bottom: 4px;
 }
+.field--wide { grid-column: 1 / -1; }
 .field {
   display: flex; flex-direction: column; gap: 5px;
   font: 600 13px/1 var(--sans); color: var(--ink-soft);
