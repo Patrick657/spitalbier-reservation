@@ -174,6 +174,7 @@ $flash = isset($_GET['msg']) ? ($flashes[$_GET['msg']] ?? null) : null;
   <a href="seating.php" class="is-active">Sitzplan</a>
   <a href="new.php">Neue Reservierung</a>
   <a href="export.php">PDF-Export</a>
+  <a href="mail_log.php">E-Mail-Log</a>
 </nav>
 
 <main class="dash-main">

@@ -52,6 +52,20 @@ CREATE TABLE IF NOT EXISTS table_assignments (
   CONSTRAINT fk_ta_reservation FOREIGN KEY (reservation_id) REFERENCES reservations(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- One row per e-mail the tool tried to send (dashboard > E-Mail-Log).
+CREATE TABLE IF NOT EXISTS mail_log (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  sent_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  recipient_email VARCHAR(190) NOT NULL,
+  recipient_name VARCHAR(190) DEFAULT NULL,
+  subject VARCHAR(190) NOT NULL,
+  kind VARCHAR(20) NOT NULL,
+  reservation_code VARCHAR(16) DEFAULT NULL,
+  status VARCHAR(10) NOT NULL,
+  error VARCHAR(255) DEFAULT NULL,
+  KEY idx_sent_at (sent_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 INSERT IGNORE INTO venue_tables (code, row_label, position, seats) VALUES
   ('A-01', 'A', 1, 6), ('A-02', 'A', 2, 6), ('A-03', 'A', 3, 6), ('A-04', 'A', 4, 6), ('A-05', 'A', 5, 6),
   ('A-06', 'A', 6, 6), ('A-07', 'A', 7, 6), ('A-08', 'A', 8, 6), ('A-09', 'A', 9, 6), ('A-10', 'A', 10, 6),

@@ -94,6 +94,7 @@ function e(string $v): string
   <a href="seating.php">Sitzplan</a>
   <a href="new.php">Neue Reservierung</a>
   <a href="export.php">PDF-Export</a>
+  <a href="mail_log.php">E-Mail-Log</a>
 </nav>
 
 <main class="dash-main">

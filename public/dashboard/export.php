@@ -154,6 +154,7 @@ $reservations = $pdo->query(
     <a href="seating.php">Sitzplan</a>
     <a href="new.php">Neue Reservierung</a>
     <a href="export.php" class="is-active">PDF-Export</a>
+    <a href="mail_log.php">E-Mail-Log</a>
   </nav>
   <div class="pdf-toolbar">
     <button type="button" onclick="printAs('a4')">Als A4 (Hochformat) drucken</button>

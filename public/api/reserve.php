@@ -5,7 +5,7 @@ header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/../../src/config.php';
 require_once __DIR__ . '/../../src/db.php';
-require_once __DIR__ . '/../../src/Mailer.php';
+require_once __DIR__ . '/../../src/MailLog.php';
 
 function sbf_json_error(int $status, string $message, array $errors = []): void
 {
@@ -159,14 +159,14 @@ try {
             . '<p>Fragen? <a href="mailto:stiftungsamt@straubing.de">stiftungsamt@straubing.de</a></p>'
             . '<p>Bürgerspitalstiftung Straubing</p>';
 
-        $mailer->send($email, $name, $subject, $text, $html);
+        sbf_send_logged($pdo, $mailer, 'confirmation', $code, $email, $name, $subject, $text, $html);
 
         if ($cfg['admin_email'] !== '') {
             $adminSubject = 'Neue Reservierung: ' . $code;
             $adminText = "Neue Reservierung ({$code})\n\n"
                 . "Name: {$name}\nE-Mail: {$email}\nTelefon: " . ($phone !== '' ? $phone : '–')
                 . "\nPersonen: {$guests}\nNewsletter: " . ($newsletter ? 'ja' : 'nein');
-            $mailer->send($cfg['admin_email'], 'Reservierungen Spitalbierfest', $adminSubject, $adminText);
+            sbf_send_logged($pdo, $mailer, 'admin_notice', $code, $cfg['admin_email'], 'Reservierungen Spitalbierfest', $adminSubject, $adminText);
         }
     }
 } catch (Throwable $e) {

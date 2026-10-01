@@ -4,7 +4,7 @@ session_start();
 
 require_once __DIR__ . '/../../src/config.php';
 require_once __DIR__ . '/../../src/db.php';
-require_once __DIR__ . '/../../src/Mailer.php';
+require_once __DIR__ . '/../../src/MailLog.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: index.php');
@@ -58,7 +58,7 @@ try {
     // here can deadlock against reserve.php/cancel.php/assign.php.
     $pdo->query('SELECT seats_taken FROM capacity_counter WHERE id = 1 FOR UPDATE');
 
-    $stmt = $pdo->prepare('SELECT id, guests, cancelled_at FROM reservations WHERE id = :id FOR UPDATE');
+    $stmt = $pdo->prepare('SELECT id, code, guests, cancelled_at FROM reservations WHERE id = :id FOR UPDATE');
     $stmt->execute(['id' => $id]);
     $reservation = $stmt->fetch();
 
@@ -144,7 +144,7 @@ if ($sendMail && $email !== '') {
                 . '<p>Fragen? <a href="mailto:stiftungsamt@straubing.de">stiftungsamt@straubing.de</a></p>'
                 . '<p>Bürgerspitalstiftung Straubing</p>';
 
-            $mailer->send($email, $name, $subject, $text, $html);
+            sbf_send_logged($pdo, $mailer, 'update', $reservation['code'], $email, $name, $subject, $text, $html);
         }
     } catch (Throwable $e) {
         error_log('[spitalbierfest] update mail error: ' . $e->getMessage());
