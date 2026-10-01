@@ -131,10 +131,10 @@ function e(string $v): string
           <th>Telefon</th>
           <th>Personen</th>
           <th>Newsletter</th>
-          <th>Eingegangen</th>
+          <th data-sorted="desc">Eingegangen</th>
           <th>Status</th>
           <th>Sitzplatz</th>
-          <th></th>
+          <th data-nosort></th>
         </tr>
       </thead>
       <tbody>
@@ -152,7 +152,7 @@ function e(string $v): string
           <td><?= e($r['phone'] !== null ? $r['phone'] : '–') ?></td>
           <td><?= (int) $r['guests'] ?></td>
           <td><?= $r['newsletter'] ? 'ja' : 'nein' ?></td>
-          <td><?= e((new DateTime($r['created_at'], $tz))->format('d.m.Y H:i')) ?></td>
+          <td data-sort="<?= e($r['created_at']) ?>"><?= e((new DateTime($r['created_at'], $tz))->format('d.m.Y H:i')) ?></td>
           <td>
             <?php if ($cancelled): ?>
               <span class="dash-badge dash-badge--cancelled">storniert</span>
@@ -197,6 +197,7 @@ function e(string $v): string
   </div>
 </main>
 
+<script src="sort.js"></script>
 <script>
 document.querySelectorAll(".dash-cancel-form").forEach(function (form) {
   form.addEventListener("submit", function (evt) {

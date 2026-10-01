@@ -91,7 +91,7 @@ foreach ($rows as $r) {
   <div class="dash-table-wrap">
     <table class="dash-table">
       <thead>
-        <tr><th>Zeitpunkt</th><th>Empf&auml;nger</th><th>E-Mail</th><th>Art</th><th>Code</th><th>Betreff</th><th>Status</th></tr>
+        <tr><th data-sorted="desc">Zeitpunkt</th><th>Empf&auml;nger</th><th>E-Mail</th><th>Art</th><th>Code</th><th>Betreff</th><th>Status</th></tr>
       </thead>
       <tbody>
         <?php if (!$rows): ?>
@@ -99,7 +99,7 @@ foreach ($rows as $r) {
         <?php endif; ?>
         <?php foreach ($rows as $r): $sent = $r['status'] === 'sent'; ?>
         <tr>
-          <td><?= e((new DateTime($r['sent_at'], $tz))->format('d.m.Y H:i')) ?></td>
+          <td data-sort="<?= e($r['sent_at']) ?>"><?= e((new DateTime($r['sent_at'], $tz))->format('d.m.Y H:i')) ?></td>
           <td><?= e($r['recipient_name'] ?? '–') ?></td>
           <td><a href="mailto:<?= e($r['recipient_email']) ?>"><?= e($r['recipient_email']) ?></a></td>
           <td><?= $kinds[$r['kind']] ?? e($r['kind']) ?></td>
@@ -118,5 +118,6 @@ foreach ($rows as $r) {
     </table>
   </div>
 </main>
+<script src="sort.js"></script>
 </body>
 </html>

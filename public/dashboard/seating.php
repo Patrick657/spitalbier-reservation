@@ -12,6 +12,7 @@ if (empty($_SESSION['csrf'])) {
 $csrf = $_SESSION['csrf'];
 
 $pdo = sbf_pdo();
+$tz = new DateTimeZone('Europe/Berlin');
 
 function e(string $v): string
 {
@@ -59,13 +60,13 @@ foreach ($tables as $t) {
 // summary tables below the floor plan.
 $assignmentsByReservation = [];
 foreach ($pdo->query(
-    "SELECT ta.reservation_id, vt.code, ta.seats
+    "SELECT ta.reservation_id, vt.code, ta.seats, ta.created_at
      FROM table_assignments ta
      JOIN venue_tables vt ON vt.id = ta.table_id
      WHERE ta.reservation_id IS NOT NULL
      ORDER BY vt.row_label, vt.position"
 )->fetchAll() as $a) {
-    $assignmentsByReservation[(int) $a['reservation_id']][] = ['code' => $a['code'], 'seats' => (int) $a['seats']];
+    $assignmentsByReservation[(int) $a['reservation_id']][] = ['code' => $a['code'], 'seats' => (int) $a['seats'], 'at' => $a['created_at']];
 }
 
 $openReservations = [];
@@ -76,7 +77,14 @@ foreach ($pdo->query(
     $tablesForRes = $assignmentsByReservation[(int) $r['id']] ?? [];
     $assignedSeats = array_sum(array_column($tablesForRes, 'seats'));
     if ($tablesForRes && $assignedSeats >= (int) $r['guests']) {
-        $assignedReservations[] = ['nameHtml' => sbf_name_html($r), 'code' => $r['code'], 'tables' => $tablesForRes];
+        $assignedReservations[] = [
+            'name' => $r['name'],
+            'nameHtml' => sbf_name_html($r),
+            'code' => $r['code'],
+            'tables' => $tablesForRes,
+            // A reservation spread over several tables counts from its latest assignment.
+            'assignedAt' => max(array_column($tablesForRes, 'at')),
+        ];
     } else {
         $openReservations[] = [
             'nameHtml' => sbf_name_html($r),
@@ -87,6 +95,15 @@ foreach ($pdo->query(
         ];
     }
 }
+
+// Assigned reservations are listed by name by default (columns can be
+// re-sorted in the browser).
+// The intl extension sorts umlauts correctly; without it fall back to a
+// plain case-insensitive comparison.
+$nameCollator = class_exists('Collator') ? new Collator('de_DE') : null;
+usort($assignedReservations, static fn($a, $b) => $nameCollator
+    ? $nameCollator->compare($a['name'], $b['name'])
+    : strcasecmp($a['name'], $b['name']));
 
 $selectedId = isset($_GET['table']) ? (int) $_GET['table'] : 0;
 $selected = null;
@@ -386,7 +403,7 @@ $flash = isset($_GET['msg']) ? ($flashes[$_GET['msg']] ?? null) : null;
                 <?php if (!empty($r['adminNote'])): ?><br><span class="dash-note">Notiz: <?= e($r['adminNote']) ?></span><?php endif; ?>
               </td>
               <td><?= (int) $r['guests'] ?></td>
-              <td><?= $r['assignedSeats'] ?> von <?= (int) $r['guests'] ?></td>
+              <td data-sort="<?= $r['assignedSeats'] ?>"><?= $r['assignedSeats'] ?> von <?= (int) $r['guests'] ?></td>
             </tr>
             <?php endforeach; ?>
           </tbody>
@@ -399,17 +416,18 @@ $flash = isset($_GET['msg']) ? ($flashes[$_GET['msg']] ?? null) : null;
       <div class="dash-table-wrap">
         <table class="dash-table">
           <thead>
-            <tr><th>Code</th><th>Name</th><th>Tisch</th></tr>
+            <tr><th>Code</th><th data-sorted="asc">Name</th><th>Tisch</th><th>Zugewiesen am</th></tr>
           </thead>
           <tbody>
             <?php if (!$assignedReservations): ?>
-            <tr><td colspan="3" class="dash-table__empty">Noch keine Tischzuweisungen.</td></tr>
+            <tr><td colspan="4" class="dash-table__empty">Noch keine Tischzuweisungen.</td></tr>
             <?php endif; ?>
             <?php foreach ($assignedReservations as $r): ?>
             <tr>
               <td><?= e($r['code']) ?></td>
               <td><?= $r['nameHtml'] ?></td>
               <td><?= e(implode(', ', array_map(fn($t) => $t['code'] . ' (' . $t['seats'] . ')', $r['tables']))) ?></td>
+              <td data-sort="<?= e($r['assignedAt']) ?>"><?= e((new DateTime($r['assignedAt'], $tz))->format('d.m.Y H:i')) ?></td>
             </tr>
             <?php endforeach; ?>
           </tbody>
@@ -418,5 +436,6 @@ $flash = isset($_GET['msg']) ? ($flashes[$_GET['msg']] ?? null) : null;
     </div>
   </div>
 </main>
+<script src="sort.js"></script>
 </body>
 </html>
