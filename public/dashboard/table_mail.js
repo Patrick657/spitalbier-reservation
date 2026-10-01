@@ -28,6 +28,15 @@
       body.value = reset.getAttribute("data-body");
     });
 
+    var copyMode = document.getElementById("mail-copy-mode");
+    var copyEmail = document.getElementById("mail-copy-email");
+    var syncCopy = function () {
+      copyEmail.readOnly = copyMode.value === "";
+      copyEmail.required = copyMode.value !== "";
+    };
+    copyMode.addEventListener("change", syncCopy);
+    syncCopy();
+
     var checks = document.querySelectorAll(".mail-check");
     var count = document.getElementById("mail-count");
     var updateCount = function () {

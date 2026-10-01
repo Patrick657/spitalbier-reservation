@@ -61,6 +61,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $subject = sbf_table_mail_clean_subject((string) ($_POST['subject'] ?? ''));
         $body = sbf_table_mail_clean_body((string) ($_POST['body'] ?? ''));
         $testEmail = trim((string) ($_POST['test_email'] ?? ''));
+        $copyMode = (string) ($_POST['copy_mode'] ?? '');
+        $copyEmail = trim((string) ($_POST['copy_email'] ?? ''));
         $ids = [];
         foreach ((array) ($_POST['ids'] ?? []) as $rawId) {
             $id = filter_var($rawId, FILTER_VALIDATE_INT);
@@ -71,21 +73,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $ids = array_values($ids);
 
         // Keep what was typed, whatever happens next.
-        $_SESSION['table_mail_draft'] = ['subject' => $subject, 'body' => $body, 'ids' => $ids, 'test_email' => $testEmail];
+        $_SESSION['table_mail_draft'] = [
+            'subject' => $subject,
+            'body' => $body,
+            'ids' => $ids,
+            'test_email' => $testEmail,
+            'copy_mode' => $copyMode,
+            'copy_email' => $copyEmail,
+        ];
 
         $pending = $_SESSION['table_mail_batch']['pending'] ?? [];
         if (!empty($_SESSION['table_mail_batch']['started']) && $pending) {
             sbf_table_mail_back('error', 'Es läuft noch ein Versand. Bitte diesen zuerst fortsetzen oder verwerfen.');
         }
 
-        $errors = sbf_table_mail_validate($subject, $body);
+        $errors = array_merge(sbf_table_mail_validate($subject, $body), sbf_table_mail_validate_copy($copyMode, $copyEmail));
         if ($errors) {
             sbf_table_mail_back('error', implode(' ', $errors));
         }
         if (!$smtpReady) {
             sbf_table_mail_back('error', 'Es ist kein SMTP-Server konfiguriert – es können keine E-Mails versendet werden.');
         }
-        sbf_table_mail_save_template($pdo, $subject, $body);
+        sbf_table_mail_save_template($pdo, $subject, $body, $copyMode, $copyEmail);
 
         $candidates = sbf_table_mail_candidates($pdo);
 
@@ -93,6 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!filter_var($testEmail, FILTER_VALIDATE_EMAIL)) {
                 sbf_table_mail_back('error', 'Bitte eine gültige Adresse für die Testmail angeben.');
             }
+            // The test goes to the test address only — no archive copy.
             // Example data: the first selected recipient, else the first possible one.
             $sample = null;
             foreach (array_merge($ids, array_keys($candidates)) as $id) {
@@ -142,6 +152,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'token' => bin2hex(random_bytes(16)),
             'subject' => $subject,
             'body' => $body,
+            'copy_mode' => $copyMode,
+            'copy_email' => $copyMode !== '' ? $copyEmail : '',
             'recipients' => $recipients,
             'pending' => [],
             'results' => [],
@@ -206,6 +218,8 @@ if ($view === 'compose') {
     $subject = $draft['subject'] ?? $template['subject'];
     $body = $draft['body'] ?? $template['body'];
     $testEmail = $draft['test_email'] ?? '';
+    $copyMode = $draft['copy_mode'] ?? $template['copy_mode'];
+    $copyEmail = $draft['copy_email'] ?? $template['copy_email'];
     $selectedIds = isset($draft['ids']) ? array_flip($draft['ids']) : null;
     $openBatch = $batch && $batch['started'] && $batch['pending'];
 
@@ -330,6 +344,19 @@ if ($view === 'progress') {
             <?php endforeach; ?>
           </dl>
 
+          <div class="mail-copy">
+            <label>Kopie jeder E-Mail (z.&nbsp;B. zur Archivierung)
+              <select name="copy_mode" id="mail-copy-mode">
+                <?php foreach (sbf_table_mail_copy_modes() as $mode => $label): ?>
+                <option value="<?= e($mode) ?>" <?= $mode === $copyMode ? 'selected' : '' ?>><?= e($label) ?></option>
+                <?php endforeach; ?>
+              </select>
+            </label>
+            <label>Adresse f&uuml;r die Kopie
+              <input type="email" name="copy_email" id="mail-copy-email" maxlength="190" value="<?= e($copyEmail) ?>" placeholder="archiv@beispiel.de">
+            </label>
+          </div>
+
           <button type="button" class="dash-btn-edit mail-reset" id="mail-reset"
             data-subject="<?= e(sbf_table_mail_default_subject()) ?>"
             data-body="<?= e(sbf_table_mail_default_body()) ?>">Standardtext wiederherstellen</button>
@@ -338,7 +365,7 @@ if ($view === 'progress') {
 
       <div class="dash-form-card mail-card">
         <h2 class="dash-two-col__heading">Testmail</h2>
-        <p class="hint">Sendet genau eine E-Mail an die hier eingetragene Adresse &ndash; mit den Daten des ersten ausgew&auml;hlten Empf&auml;ngers und &bdquo;[TEST]&ldquo; im Betreff.</p>
+        <p class="hint">Sendet genau eine E-Mail an die hier eingetragene Adresse &ndash; mit den Daten des ersten ausgew&auml;hlten Empf&auml;ngers und &bdquo;[TEST]&ldquo; im Betreff. Die Testmail geht nicht an die Kopie-Adresse.</p>
         <div class="assign-form">
           <label>Testadresse
             <input type="email" name="test_email" value="<?= e($testEmail) ?>" placeholder="ihre.adresse@beispiel.de">
@@ -425,6 +452,10 @@ if ($view === 'progress') {
   <div class="dash-flash dash-flash--error">Bei <?= $incompleteCount ?> der ausgew&auml;hlten Reservierungen sind noch nicht alle Pl&auml;tze einem Tisch zugewiesen.</div>
   <?php endif; ?>
 
+  <?php if ($batch['copy_mode'] !== ''): ?>
+  <div class="dash-flash dash-flash--info">Jede E-Mail geht zus&auml;tzlich als <?= e(strtoupper($batch['copy_mode'])) ?> an <?= e($batch['copy_email']) ?> (insgesamt <?= $total ?> Kopie<?= $total === 1 ? '' : 'n' ?>).<?= $batch['copy_mode'] === 'cc' ? ' Die Adresse ist f&uuml;r die G&auml;ste sichtbar.' : '' ?></div>
+  <?php endif; ?>
+
   <h2 class="dash-two-col__heading"><?= $total ?> E-Mail<?= $total === 1 ? '' : 's' ?> &ndash; Vorschau</h2>
 
   <div class="mail-previews">
@@ -442,6 +473,9 @@ if ($view === 'progress') {
       </summary>
       <div class="mail-preview__body">
         <div class="mail-preview__head"><strong>An:</strong> <?= e($vars['name']) ?> &lt;<?= e($c['email']) ?>&gt;</div>
+        <?php if ($batch['copy_mode'] !== ''): ?>
+        <div class="mail-preview__head"><strong><?= e(strtoupper($batch['copy_mode'])) ?>:</strong> <?= e($batch['copy_email']) ?></div>
+        <?php endif; ?>
         <div class="mail-preview__head"><strong>Betreff:</strong> <?= e(sbf_table_mail_render($batch['subject'], $vars)) ?></div>
         <pre><?= e(sbf_table_mail_render($batch['body'], $vars)) ?></pre>
       </div>

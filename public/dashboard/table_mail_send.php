@@ -91,7 +91,9 @@ try {
         $vars['name'],
         sbf_table_mail_render($batch['subject'], $vars),
         $text,
-        sbf_table_mail_html($text)
+        sbf_table_mail_html($text),
+        $batch['copy_mode'] === 'cc' ? [$batch['copy_email']] : [],
+        $batch['copy_mode'] === 'bcc' ? [$batch['copy_email']] : []
     );
 } catch (Throwable $e) {
     error_log('[spitalbierfest] table mail error: ' . $e->getMessage());

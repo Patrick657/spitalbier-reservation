@@ -7,7 +7,8 @@ require_once __DIR__ . '/Mailer.php';
  * Sends a mail and records the attempt (sent or failed) in mail_log.
  * Logging is best-effort: a missing table or DB hiccup must never block
  * the mail itself. A failed send is rethrown so callers keep their own
- * error handling.
+ * error handling. Copies ($cc/$bcc) ride along on the same mail and are
+ * not logged as rows of their own.
  */
 function sbf_send_logged(
     PDO $pdo,
@@ -18,11 +19,13 @@ function sbf_send_logged(
     string $toName,
     string $subject,
     string $textBody,
-    ?string $htmlBody = null
+    ?string $htmlBody = null,
+    array $cc = [],
+    array $bcc = []
 ): void {
     $error = null;
     try {
-        $mailer->send($toEmail, $toName, $subject, $textBody, $htmlBody);
+        $mailer->send($toEmail, $toName, $subject, $textBody, $htmlBody, $cc, $bcc);
     } catch (Throwable $e) {
         $error = $e;
     }

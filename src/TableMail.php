@@ -52,31 +52,49 @@ function sbf_table_mail_default_body(): string
  * the table-mail migration has been run; without it the default is used and
  * nothing is remembered between visits.
  *
- * @return array{subject: string, body: string}
+ * @return array{subject: string, body: string, copy_mode: string, copy_email: string}
  */
 function sbf_table_mail_load_template(PDO $pdo): array
 {
     try {
-        $stmt = $pdo->prepare('SELECT subject, body FROM mail_templates WHERE name = :name');
+        $stmt = $pdo->prepare('SELECT * FROM mail_templates WHERE name = :name');
         $stmt->execute(['name' => SBF_TABLE_MAIL_KIND]);
         $row = $stmt->fetch();
         if ($row) {
-            return ['subject' => (string) $row['subject'], 'body' => (string) $row['body']];
+            return [
+                'subject' => (string) $row['subject'],
+                'body' => (string) $row['body'],
+                'copy_mode' => (string) ($row['copy_mode'] ?? ''),
+                'copy_email' => (string) ($row['copy_email'] ?? ''),
+            ];
         }
     } catch (PDOException $e) {
         // table missing — fall through to the default
     }
-    return ['subject' => sbf_table_mail_default_subject(), 'body' => sbf_table_mail_default_body()];
+    return [
+        'subject' => sbf_table_mail_default_subject(),
+        'body' => sbf_table_mail_default_body(),
+        'copy_mode' => '',
+        'copy_email' => '',
+    ];
 }
 
 /** Best-effort: a missing table must not block previewing or sending. */
-function sbf_table_mail_save_template(PDO $pdo, string $subject, string $body): bool
+function sbf_table_mail_save_template(PDO $pdo, string $subject, string $body, string $copyMode, string $copyEmail): bool
 {
     try {
         $pdo->beginTransaction();
         $pdo->prepare('DELETE FROM mail_templates WHERE name = :name')->execute(['name' => SBF_TABLE_MAIL_KIND]);
-        $pdo->prepare('INSERT INTO mail_templates (name, subject, body) VALUES (:name, :subject, :body)')
-            ->execute(['name' => SBF_TABLE_MAIL_KIND, 'subject' => $subject, 'body' => $body]);
+        $pdo->prepare(
+            'INSERT INTO mail_templates (name, subject, body, copy_mode, copy_email)
+             VALUES (:name, :subject, :body, :copy_mode, :copy_email)'
+        )->execute([
+            'name' => SBF_TABLE_MAIL_KIND,
+            'subject' => $subject,
+            'body' => $body,
+            'copy_mode' => $copyMode,
+            'copy_email' => $copyEmail,
+        ]);
         $pdo->commit();
         return true;
     } catch (PDOException $e) {
@@ -241,6 +259,28 @@ function sbf_table_mail_validate(string $subject, string $body): array
         $errors[] = 'Unbekannte Platzhalter: ' . implode(', ', $unknown) . '. Bitte nur die aufgelisteten Platzhalter verwenden.';
     }
     return $errors;
+}
+
+/** How the archive copy is addressed; '' sends no copy. */
+function sbf_table_mail_copy_modes(): array
+{
+    return [
+        '' => 'Keine Kopie',
+        'bcc' => 'BCC – Blindkopie, für den Gast unsichtbar',
+        'cc' => 'CC – Kopie, für den Gast sichtbar',
+    ];
+}
+
+/** @return string[] problems with the archive copy settings */
+function sbf_table_mail_validate_copy(string $mode, string $email): array
+{
+    if (!isset(sbf_table_mail_copy_modes()[$mode])) {
+        return ['Ungültige Auswahl für die Kopie.'];
+    }
+    if ($mode !== '' && (!filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 190)) {
+        return ['Bitte eine gültige E-Mail-Adresse für die Kopie (' . strtoupper($mode) . ') angeben.'];
+    }
+    return [];
 }
 
 /** Normalises what comes out of the form: one-line subject, \n line ends. */

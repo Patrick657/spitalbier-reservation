@@ -49,9 +49,13 @@ final class SmtpMailer
         $this->timeout = $timeout;
     }
 
-    public function send(string $toEmail, string $toName, string $subject, string $textBody, ?string $htmlBody = null): void
+    /**
+     * @param string[] $cc  extra recipients named in the mail's Cc header
+     * @param string[] $bcc extra recipients the others don't get to see
+     */
+    public function send(string $toEmail, string $toName, string $subject, string $textBody, ?string $htmlBody = null, array $cc = [], array $bcc = []): void
     {
-        foreach ([$toEmail, $this->fromEmail] as $addr) {
+        foreach (array_merge([$toEmail, $this->fromEmail], $cc, $bcc) as $addr) {
             if (preg_match('/[\r\n]/', $addr)) {
                 throw new SmtpException('Invalid address (header injection attempt).');
             }
@@ -77,10 +81,12 @@ final class SmtpMailer
             }
 
             $this->command($sock, 'MAIL FROM:<' . $this->fromEmail . '>', 250);
-            $this->command($sock, 'RCPT TO:<' . $toEmail . '>', [250, 251]);
+            foreach (array_merge([$toEmail], $cc, $bcc) as $addr) {
+                $this->command($sock, 'RCPT TO:<' . $addr . '>', [250, 251]);
+            }
             $this->command($sock, 'DATA', 354);
 
-            $message = $this->buildMessage($toEmail, $toName, $subject, $textBody, $htmlBody);
+            $message = $this->buildMessage($toEmail, $toName, $subject, $textBody, $htmlBody, $cc);
             $message = $this->dotStuff($message);
 
             $this->write($sock, $message . "\r\n.");
@@ -92,12 +98,16 @@ final class SmtpMailer
         }
     }
 
-    private function buildMessage(string $toEmail, string $toName, string $subject, string $textBody, ?string $htmlBody): string
+    /** @param string[] $cc */
+    private function buildMessage(string $toEmail, string $toName, string $subject, string $textBody, ?string $htmlBody, array $cc = []): string
     {
         $headers = [];
         $headers[] = 'Date: ' . date('r');
         $headers[] = 'From: ' . $this->encodeHeader($this->fromName) . ' <' . $this->fromEmail . '>';
         $headers[] = 'To: ' . $this->encodeHeader($toName) . ' <' . $toEmail . '>';
+        if ($cc) {
+            $headers[] = 'Cc: ' . implode(', ', array_map(static fn(string $addr): string => '<' . $addr . '>', $cc));
+        }
         $headers[] = 'Subject: ' . $this->encodeHeader($subject);
         $headers[] = 'MIME-Version: 1.0';
         $headers[] = 'Message-ID: <' . bin2hex(random_bytes(16)) . '@' . $this->heloDomain() . '>';
