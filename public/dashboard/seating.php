@@ -143,7 +143,6 @@ $flashes = [
     'seats_updated' => ['type' => 'ok', 'text' => 'Platzzahl aktualisiert.'],
     'merged' => ['type' => 'ok', 'text' => 'Tische zusammengelegt.'],
     'unmerged' => ['type' => 'ok', 'text' => 'Zusammenlegung aufgehoben.'],
-    'not_empty' => ['type' => 'error', 'text' => 'Zum Aufheben muss der Tisch leer sein (keine Zuweisungen).'],
     'below_occupied' => ['type' => 'error', 'text' => 'Die Platzzahl kann nicht unter die bereits belegten Plätze gesenkt werden.'],
 ];
 $flash = isset($_GET['msg']) ? ($flashes[$_GET['msg']] ?? null) : null;
@@ -327,14 +326,13 @@ $flash = isset($_GET['msg']) ? ($flashes[$_GET['msg']] ?? null) : null;
           <div class="table-manage__note">
             Zusammengelegt mit <?= e(implode(', ', array_map(fn($c) => $c['code'], $mergedChildren))) ?> (<?= (int) $selected['base_seats'] ?> + <?= array_sum(array_map(fn($c) => (int) $c['base_seats'], $mergedChildren)) ?> Grundpl&auml;tze).
           </div>
-          <?php if ($occupied === 0): ?>
           <form method="post" action="table_unmerge.php" class="assign-form">
             <input type="hidden" name="table_id" value="<?= (int) $selected['id'] ?>">
             <input type="hidden" name="csrf" value="<?= e($csrf) ?>">
             <button type="submit" class="dash-btn-edit">Zusammenlegung aufheben</button>
           </form>
-          <?php else: ?>
-          <p class="assign-panel__hint">Zum Aufheben muss der Tisch erst leer sein.</p>
+          <?php if ($occupied > 0): ?>
+          <p class="assign-panel__hint">Belegte Pl&auml;tze werden dabei automatisch auf die einzelnen Tische verteilt.</p>
           <?php endif; ?>
           <?php elseif ($neighborCandidates): ?>
           <form method="post" action="table_merge.php" class="assign-form">
