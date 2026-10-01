@@ -71,6 +71,7 @@ if (isset($_GET['msg'])) {
   <a href="index.php">Buchungen</a>
   <a href="seating.php">Sitzplan</a>
   <a href="new.php" class="is-active">Neue Reservierung</a>
+  <a href="table_mail.php">Tischbest&auml;tigung</a>
   <a href="mail_log.php">E-Mail-Log</a>
 </nav>
 

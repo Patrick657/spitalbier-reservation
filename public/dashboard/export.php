@@ -174,6 +174,7 @@ $reservations = $pdo->query(
     <a href="seating.php">Sitzplan</a>
     <a href="new.php">Neue Reservierung</a>
     <a href="export.php" class="is-active">PDF-Export</a>
+    <a href="table_mail.php">Tischbest&auml;tigung</a>
     <a href="mail_log.php">E-Mail-Log</a>
   </nav>
   <div class="pdf-toolbar">

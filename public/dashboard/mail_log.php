@@ -16,6 +16,8 @@ $kinds = [
     'confirmation' => 'Best&auml;tigung',
     'update' => '&Auml;nderung',
     'admin_notice' => 'Info an Verwaltung',
+    'table_confirm' => 'Tischbest&auml;tigung',
+    'table_test' => 'Tischbest&auml;tigung (Test)',
 ];
 
 // The table only exists once the mail-log migration has been run.
@@ -77,6 +79,7 @@ foreach ($rows as $r) {
   <a href="seating.php">Sitzplan</a>
   <a href="new.php">Neue Reservierung</a>
   <a href="export.php">PDF-Export</a>
+  <a href="table_mail.php">Tischbest&auml;tigung</a>
   <a href="mail_log.php" class="is-active">E-Mail-Log</a>
 </nav>
 

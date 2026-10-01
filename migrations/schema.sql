@@ -69,6 +69,14 @@ CREATE TABLE IF NOT EXISTS mail_log (
   KEY idx_sent_at (sent_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Saved text of the batch mails (dashboard > Tischbestätigung).
+CREATE TABLE IF NOT EXISTS mail_templates (
+  name VARCHAR(20) NOT NULL PRIMARY KEY,
+  subject VARCHAR(190) NOT NULL,
+  body TEXT NOT NULL,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 INSERT IGNORE INTO venue_tables (code, row_label, position, seats) VALUES
   ('A-01', 'A', 1, 6), ('A-02', 'A', 2, 6), ('A-03', 'A', 3, 6), ('A-04', 'A', 4, 6), ('A-05', 'A', 5, 6),
   ('A-06', 'A', 6, 6), ('A-07', 'A', 7, 6), ('A-08', 'A', 8, 6), ('A-09', 'A', 9, 6), ('A-10', 'A', 10, 6),
