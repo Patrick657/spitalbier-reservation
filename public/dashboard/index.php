@@ -19,6 +19,8 @@ $pdo = sbf_pdo();
 
 $totalBookings = (int) $pdo->query('SELECT COUNT(*) FROM reservations')->fetchColumn();
 $cancelledCount = (int) $pdo->query('SELECT COUNT(*) FROM reservations WHERE cancelled_at IS NOT NULL')->fetchColumn();
+$guestCancelledCount = (int) $pdo->query("SELECT COUNT(*) FROM reservations WHERE cancelled_by = 'guest'")->fetchColumn();
+$confirmedCount = (int) $pdo->query('SELECT COUNT(*) FROM reservations WHERE confirmed_at IS NOT NULL AND cancelled_at IS NULL')->fetchColumn();
 
 $monday = new DateTime('now', $tz);
 $monday->modify('monday this week')->setTime(0, 0, 0);
@@ -32,7 +34,7 @@ $seatsTaken = (int) $pdo->query('SELECT seats_taken FROM capacity_counter WHERE 
 $occupancyPct = $cap > 0 ? round(($seatsTaken / $cap) * 100, 1) : 0.0;
 
 $rows = $pdo->query(
-    'SELECT id, code, name, first_name, last_name, company, email, phone, guests, newsletter, created_at, cancelled_at, admin_note, source
+    'SELECT id, code, name, first_name, last_name, company, email, phone, guests, newsletter, created_at, cancelled_at, admin_note, source, confirmed_at, cancelled_by
      FROM reservations ORDER BY created_at DESC'
 )->fetchAll();
 
@@ -113,12 +115,17 @@ function e(string $v): string
     <div class="dash-kpi">
       <div class="dash-kpi__label">Buchungen gesamt</div>
       <div class="dash-kpi__value"><?= $totalBookings ?></div>
-      <div class="dash-kpi__sub"><?= $cancelledCount ?> storniert</div>
+      <div class="dash-kpi__sub"><?= $cancelledCount ?> storniert, davon <?= $guestCancelledCount ?> vom Gast</div>
     </div>
     <div class="dash-kpi">
       <div class="dash-kpi__label">Auslastung</div>
       <div class="dash-kpi__value"><?= $occupancyPct ?>%</div>
       <div class="dash-kpi__sub"><?= $seatsTaken ?> von <?= $cap ?> Pl&auml;tzen</div>
+    </div>
+    <div class="dash-kpi">
+      <div class="dash-kpi__label">Vom Gast best&auml;tigt</div>
+      <div class="dash-kpi__value"><?= $confirmedCount ?></div>
+      <div class="dash-kpi__sub">&uuml;ber den Link in der Tischbest&auml;tigung</div>
     </div>
   </div>
 
@@ -156,7 +163,10 @@ function e(string $v): string
           <td data-sort="<?= e($r['created_at']) ?>"><?= e((new DateTime($r['created_at'], $tz))->format('d.m.Y H:i')) ?></td>
           <td>
             <?php if ($cancelled): ?>
-              <span class="dash-badge dash-badge--cancelled">storniert</span>
+              <span class="dash-badge dash-badge--cancelled"><?= $r['cancelled_by'] === 'guest' ? 'vom Gast storniert' : 'storniert' ?></span>
+              <br><span class="dash-note"><?= e((new DateTime($r['cancelled_at'], $tz))->format('d.m. H:i')) ?></span>
+            <?php elseif ($r['confirmed_at'] !== null): ?>
+              <span class="dash-badge dash-badge--active" title="Best&auml;tigt am <?= e((new DateTime($r['confirmed_at'], $tz))->format('d.m.Y H:i')) ?>">best&auml;tigt</span>
             <?php else: ?>
               <span class="dash-badge dash-badge--active">aktiv</span>
             <?php endif; ?>

@@ -114,6 +114,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($sample === null) {
                 sbf_table_mail_back('error', 'Für eine Testmail fehlt eine Reservierung mit zugewiesenem Tisch und E-Mail-Adresse.');
             }
+            // Test links lead to a demo page — never to the real guest's reservation.
+            $sample['manage_token'] = SBF_TEST_TOKEN;
             $vars = sbf_table_mail_vars($sample);
             $text = sbf_table_mail_render($body, $vars);
             try {
@@ -147,6 +149,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // number grows before our turn, someone else sent it meanwhile.
             $recipients[$id] = $candidates[$id]['sent_count'];
         }
+        // Personal links exist from here on, so the preview shows the real ones.
+        sbf_ensure_manage_tokens($pdo, array_keys($recipients));
 
         $_SESSION['table_mail_batch'] = [
             'token' => bin2hex(random_bytes(16)),
@@ -426,6 +430,9 @@ if ($view === 'progress') {
               <?php if ($ok && !$c['complete']): ?>
                 <span class="dash-seats__partial" title="<?= $c['assigned'] ?> von <?= $c['guests'] ?> Pl&auml;tzen zugewiesen">unvollst&auml;ndig gesetzt</span>
               <?php endif; ?>
+              <?php if ($c['confirmed_at'] !== null): ?>
+                <span class="dash-badge dash-badge--active">vom Gast best&auml;tigt</span>
+              <?php endif; ?>
               <?php if ($c['sent_count'] > 0): ?>
                 <span class="dash-badge dash-badge--active">bereits versendet <?= e((new DateTime($c['last_sent_at'], $tz))->format('d.m. H:i')) ?></span>
               <?php endif; ?>
@@ -450,6 +457,10 @@ if ($view === 'progress') {
   <?php endif; ?>
   <?php if ($incompleteCount > 0): ?>
   <div class="dash-flash dash-flash--error">Bei <?= $incompleteCount ?> der ausgew&auml;hlten Reservierungen sind noch nicht alle Pl&auml;tze einem Tisch zugewiesen.</div>
+  <?php endif; ?>
+
+  <?php if (!str_contains($batch['body'], '{link_bestaetigen}') && !str_contains($batch['body'], '{link_stornieren}')): ?>
+  <div class="dash-flash dash-flash--error">Der Text enth&auml;lt keine Links zum Best&auml;tigen oder Stornieren ({link_bestaetigen}, {link_stornieren}). Die G&auml;ste k&ouml;nnen dann nicht per Klick antworten.</div>
   <?php endif; ?>
 
   <?php if ($batch['copy_mode'] !== ''): ?>

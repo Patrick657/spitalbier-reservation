@@ -45,6 +45,9 @@ function sbf_config(): array
         // dashboard (large groups) — the public form still enforces the
         // lower max_guests_per_reservation above.
         'admin_max_guests_per_reservation' => (int) ($file['admin_max_guests_per_reservation'] ?? 60),
+        // Address of the public site, used for the guest links in mails
+        // (public/ is the web root).
+        'base_url' => rtrim((string) $env('SBF_BASE_URL', $file['base_url'] ?? 'https://straubinger-spitalbier.de'), '/'),
         'event_deadline' => $env('SBF_EVENT_DEADLINE', $file['event_deadline'] ?? '2026-10-30 18:30:00'),
     ];
 

@@ -34,6 +34,10 @@ return [
     'capacity' => 220,
     'max_guests_per_reservation' => 10,
 
+    // Public address of the site (the public/ folder), used for the
+    // confirm/cancel links in the Tischbestätigung. No trailing slash.
+    'base_url' => 'https://straubinger-spitalbier.de',
+
     // Reservations are rejected once this moment (Europe/Berlin) has passed.
     'event_deadline' => '2026-10-30 18:30:00',
 ];

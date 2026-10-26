@@ -61,6 +61,7 @@ try {
     $pdo = sbf_pdo();
     $mailer = sbf_table_mail_mailer($cfg);
 
+    sbf_ensure_manage_tokens($pdo, [$id]);
     // Always from current data: tables may have changed since the preview.
     $recipient = sbf_table_mail_candidates($pdo, [$id])[$id] ?? null;
 

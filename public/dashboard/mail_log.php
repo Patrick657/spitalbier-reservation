@@ -18,6 +18,7 @@ $kinds = [
     'admin_notice' => 'Info an Verwaltung',
     'table_confirm' => 'Tischbest&auml;tigung',
     'table_test' => 'Tischbest&auml;tigung (Test)',
+    'guest_cancel' => 'Storno durch Gast',
 ];
 
 // The table only exists once the mail-log migration has been run.

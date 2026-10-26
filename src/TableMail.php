@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/names.php';
+require_once __DIR__ . '/Reservation.php';
 
 /**
  * Batch "Tischbestätigung": one individual mail per reservation, built from
@@ -25,6 +26,8 @@ function sbf_table_mail_placeholders(): array
         'personen' => 'Anzahl reservierter Personen',
         'tische' => 'Zugewiesene Tische, z. B. „A-01, A-02“',
         'tische_detail' => 'Tische mit Platzzahl, z. B. „A-01 (6 Plätze), A-02 (4 Plätze)“',
+        'link_bestaetigen' => 'Persönlicher Link, mit dem der Gast die Reservierung bestätigt',
+        'link_stornieren' => 'Persönlicher Link, mit dem der Gast die Reservierung storniert (Tische werden frei)',
     ];
 }
 
@@ -43,6 +46,9 @@ function sbf_table_mail_default_body(): string
         . "Termin: Freitag, 30. Oktober 2026, 18:00 Uhr\n"
         . "Ort: Rittersaal im Herzogschloss, Straubing\n\n"
         . "Ihre Tische werden bis 18:30 Uhr freigehalten, danach entfallen nicht angetretene Reservierungen.\n\n"
+        . "Bitte geben Sie uns kurz Bescheid, ob Sie kommen:\n\n"
+        . "Tischreservierung bestätigen:\n{link_bestaetigen}\n\n"
+        . "Tischreservierung stornieren:\n{link_stornieren}\n\n"
         . "Fragen? stiftungsamt@straubing.de\n\n"
         . "Straubinger Spitalbier der Bürgerspitalstiftung Straubing";
 }
@@ -124,7 +130,7 @@ function sbf_table_mail_candidates(PDO $pdo, ?array $onlyIds = null): array
         $params = array_values($onlyIds);
     }
     $stmt = $pdo->prepare(
-        "SELECT id, code, name, first_name, last_name, company, email, guests
+        "SELECT id, code, name, first_name, last_name, company, email, guests, manage_token, confirmed_at
          FROM reservations WHERE {$where} ORDER BY name"
     );
     $stmt->execute($params);
@@ -210,6 +216,10 @@ function sbf_table_mail_vars(array $r): array
         'personen' => (string) $r['guests'],
         'tische' => implode(', ', array_keys($r['tables'])),
         'tische_detail' => implode(', ', $detail),
+        // Without a token (only before sbf_ensure_manage_tokens ran) the
+        // placeholder stays visible instead of a broken link.
+        'link_bestaetigen' => !empty($r['manage_token']) ? sbf_manage_url((string) $r['manage_token'], 'bestaetigen') : '{link_bestaetigen}',
+        'link_stornieren' => !empty($r['manage_token']) ? sbf_manage_url((string) $r['manage_token'], 'stornieren') : '{link_stornieren}',
     ];
 }
 
@@ -294,13 +304,26 @@ function sbf_table_mail_clean_body(string $body): string
     return trim(str_replace(["\r\n", "\r"], "\n", $body));
 }
 
-/** HTML part for a plain-text mail body: escaped, line breaks kept. */
+/** HTML part for a plain-text mail body: escaped, line breaks kept, web addresses clickable. */
 function sbf_table_mail_html(string $text): string
 {
     $paragraphs = preg_split('/\n{2,}/', $text) ?: [];
     $html = '';
     foreach ($paragraphs as $p) {
-        $html .= '<p>' . nl2br(htmlspecialchars($p, ENT_QUOTES, 'UTF-8'), false) . '</p>';
+        $escaped = nl2br(htmlspecialchars($p, ENT_QUOTES, 'UTF-8'), false);
+        // After escaping, & in a URL reads &amp; — exactly what an href needs.
+        // The guest's own confirm/cancel links become buttons, any other address a plain link.
+        $escaped = (string) preg_replace_callback('~https?://[^\s<]+~', static function (array $m): string {
+            if (preg_match('~/reservierung\.php\?t=[^&\s]+&amp;a=(bestaetigen|stornieren)$~', $m[0], $a)) {
+                $confirm = $a[1] === 'bestaetigen';
+                return '<a href="' . $m[0] . '" style="display:inline-block;padding:12px 22px;border-radius:999px;'
+                    . 'font-weight:bold;text-decoration:none;'
+                    . ($confirm ? 'background:#3a5a24;color:#ffffff;' : 'background:#ffffff;color:#7a3b1d;border:1px solid #7a3b1d;')
+                    . '">Tischreservierung ' . ($confirm ? 'bestätigen' : 'stornieren') . '</a>';
+            }
+            return '<a href="' . $m[0] . '">' . $m[0] . '</a>';
+        }, $escaped);
+        $html .= '<p>' . $escaped . '</p>';
     }
     return $html;
 }

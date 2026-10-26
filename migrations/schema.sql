@@ -17,7 +17,11 @@ CREATE TABLE IF NOT EXISTS reservations (
   cancelled_at DATETIME DEFAULT NULL,
   admin_note VARCHAR(190) DEFAULT NULL,
   source VARCHAR(10) NOT NULL DEFAULT 'public',
-  UNIQUE KEY uniq_code (code)
+  manage_token VARCHAR(32) DEFAULT NULL,
+  confirmed_at DATETIME DEFAULT NULL,
+  cancelled_by VARCHAR(10) DEFAULT NULL,
+  UNIQUE KEY uniq_code (code),
+  UNIQUE KEY uniq_manage_token (manage_token)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Single-row counter, locked with SELECT ... FOR UPDATE on write so that
