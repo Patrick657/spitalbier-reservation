@@ -43,3 +43,9 @@ function sbf_name_html(array $r): string
     $person = sbf_list_name((string) ($r['first_name'] ?? ''), (string) ($r['last_name'] ?? ''));
     return $esc($company) . ($person !== '' ? '<br><span class="dash-note">(' . $esc($person) . ')</span>' : '');
 }
+
+/** "1 Platz", "10 Plätze". */
+function sbf_seats_label(int $seats): string
+{
+    return $seats . ($seats === 1 ? ' Platz' : ' Plätze');
+}

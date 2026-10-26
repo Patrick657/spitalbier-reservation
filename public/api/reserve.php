@@ -164,7 +164,7 @@ try {
 
         $subject = 'Ihre Reservierung zum Spitalbierfest – ' . $code;
         $text = "Vergelt's Gott, {$greetName}!\n\n"
-            . "wir haben {$guests} Plätze für Sie zum 1. Straubinger Spitalbierfest vorgemerkt.\n\n"
+            . "wir haben " . sbf_seats_label($guests) . " für Sie zum 1. Straubinger Spitalbierfest vorgemerkt.\n\n"
             . "Reservierungsnummer: {$code}\n"
             . "Termin: Freitag, 30. Oktober 2026, 18:00 Uhr\n"
             . "Ort: Rittersaal im Herzogschloss, Straubing\n"
@@ -172,7 +172,7 @@ try {
             . "Fragen? stiftungsamt@straubing.de\n\n"
             . "Straubinger Spitalbier der Bürgerspitalstiftung Straubing";
         $html = '<p>Vergelt&rsquo;s Gott, ' . htmlspecialchars($greetName, ENT_QUOTES, 'UTF-8') . '!</p>'
-            . '<p>wir haben <strong>' . $guests . ' Plätze</strong> für Sie zum 1. Straubinger Spitalbierfest vorgemerkt.</p>'
+            . '<p>wir haben <strong>' . sbf_seats_label($guests) . '</strong> für Sie zum 1. Straubinger Spitalbierfest vorgemerkt.</p>'
             . '<p>Reservierungsnummer: <strong>' . htmlspecialchars($code, ENT_QUOTES, 'UTF-8') . '</strong><br>'
             . 'Termin: Freitag, 30. Oktober 2026, 18:00 Uhr<br>'
             . 'Ort: Rittersaal im Herzogschloss, Straubing</p>'
