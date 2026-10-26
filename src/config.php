@@ -49,6 +49,10 @@ function sbf_config(): array
         // (public/ is the web root).
         'base_url' => rtrim((string) $env('SBF_BASE_URL', $file['base_url'] ?? 'https://straubinger-spitalbier.de'), '/'),
         'event_deadline' => $env('SBF_EVENT_DEADLINE', $file['event_deadline'] ?? '2026-10-30 18:30:00'),
+        // Until when guests may confirm or cancel via their personal link.
+        // Separate from event_deadline, so closing the booking form early
+        // doesn't lock the links in the Tischbestätigung.
+        'guest_deadline' => $env('SBF_GUEST_DEADLINE', $file['guest_deadline'] ?? '2026-10-30 18:30:00'),
     ];
 
     return $config;
@@ -60,13 +64,13 @@ const SBF_DEADLINE_MESSAGE = 'Reservierung abgeschlossen. Auf Anfrage sind noch 
  * True once event_deadline has passed. A misconfigured deadline string
  * should never block valid reservations, so parse errors count as "open".
  */
-function sbf_deadline_passed(array $cfg): bool
+function sbf_deadline_passed(array $cfg, string $key = 'event_deadline'): bool
 {
     try {
         $tz = new DateTimeZone('Europe/Berlin');
-        return new DateTime('now', $tz) >= new DateTime($cfg['event_deadline'], $tz);
+        return new DateTime('now', $tz) >= new DateTime($cfg[$key], $tz);
     } catch (Exception $e) {
-        error_log('[spitalbierfest] invalid event_deadline config: ' . $e->getMessage());
+        error_log('[spitalbierfest] invalid ' . $key . ' config: ' . $e->getMessage());
         return false;
     }
 }

@@ -33,7 +33,7 @@ function sbf_manage_redirect(string $token, string $done): void
 
 $token = trim((string) ($_POST['t'] ?? $_GET['t'] ?? ''));
 $isTest = $token === SBF_TEST_TOKEN;
-$closed = sbf_deadline_passed($cfg);
+$closed = sbf_deadline_passed($cfg, 'guest_deadline');
 $reservation = null;
 $tables = [];
 $error = false;

@@ -40,4 +40,8 @@ return [
 
     // Reservations are rejected once this moment (Europe/Berlin) has passed.
     'event_deadline' => '2026-10-30 18:30:00',
+
+    // Guests can confirm or cancel via the link in the Tischbestätigung
+    // until this moment — independent of event_deadline above.
+    'guest_deadline' => '2026-10-30 18:30:00',
 ];
