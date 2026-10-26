@@ -542,3 +542,6 @@ button.dash-btn-edit { cursor: pointer; }
 .mail-copy { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding-top: 14px; border-top: 1px solid #e6dac0; }
 .mail-copy input[readonly] { opacity: .5; }
 @media (max-width: 720px) { .mail-copy { grid-template-columns: 1fr; } }
+
+/* E-Mail-Log: the SMTP error under a failed mail, wraps instead of widening the table */
+.mail-log__error { display: inline-block; max-width: 320px; margin-top: 4px; white-space: normal; word-break: break-word; font-style: normal; color: #7a2418; }

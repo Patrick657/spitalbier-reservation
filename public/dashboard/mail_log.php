@@ -113,7 +113,8 @@ foreach ($rows as $r) {
             <?php if ($sent): ?>
               <span class="dash-badge dash-badge--active">versendet</span>
             <?php else: ?>
-              <span class="dash-badge dash-badge--cancelled" title="<?= e($r['error'] ?? '') ?>">fehlgeschlagen</span>
+              <span class="dash-badge dash-badge--cancelled">fehlgeschlagen</span>
+              <?php if (!empty($r['error'])): ?><br><span class="dash-note mail-log__error"><?= e($r['error']) ?></span><?php endif; ?>
             <?php endif; ?>
           </td>
         </tr>
