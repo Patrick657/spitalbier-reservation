@@ -126,22 +126,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $reservation && !$error) {
     sbf_manage_redirect($token, 'error');
 }
 
-$done = (string) ($_GET['done'] ?? '');
-$messages = [
-    'confirmed' => ['ok', 'Vielen Dank! Ihre Tischreservierung ist bestätigt. Wir freuen uns auf Sie.'],
-    'cancelled' => ['ok', 'Ihre Tischreservierung wurde storniert. Schade, dass Sie nicht kommen können – vielleicht ein andermal!'],
-    'already_cancelled' => ['info', 'Diese Reservierung war bereits storniert.'],
-    'closed' => ['info', 'Die Reservierung kann online nicht mehr geändert werden.'],
-    'test' => ['info', 'Testlink: Es wurde nichts geändert. Die Gäste erhalten in ihrer E-Mail einen persönlichen Link.'],
-    'error' => ['error', 'Das hat leider nicht geklappt. Bitte versuchen Sie es später erneut oder schreiben Sie uns an stiftungsamt@straubing.de.'],
-];
-$message = $messages[$done] ?? null;
 
-$preselect = (string) ($_GET['a'] ?? '');
+$done = (string) ($_GET['done'] ?? '');
 $cancelled = $reservation && $reservation['cancelled_at'] !== null;
 $confirmed = $reservation && $reservation['confirmed_at'] !== null;
-$canAct = $reservation && !$cancelled && !$closed && !$error;
 $guestName = $reservation ? (sbf_person_name((string) $reservation['first_name'], (string) $reservation['last_name']) ?: (string) $reservation['company']) : '';
+
+// Exactly one of these views is shown.
+if ($error) {
+    $view = 'error';
+} elseif (!$reservation) {
+    $view = 'invalid';
+} elseif ($cancelled) {
+    $view = 'cancelled';
+} elseif ($closed) {
+    $view = 'closed';
+} elseif (($_GET['a'] ?? '') === 'stornieren') {
+    $view = 'cancel';
+} elseif ($confirmed) {
+    $view = 'confirmed';
+} else {
+    $view = 'confirm';
+}
+
+// Short notice above the card, for the outcome of a button press.
+$notices = [
+    'test' => ['info', 'Testlink: Es wurde nichts geändert. Die Gäste erhalten in ihrer E-Mail einen persönlichen Link.'],
+    'error' => ['error', 'Das hat leider nicht geklappt. Bitte versuchen Sie es noch einmal oder schreiben Sie uns an stiftungsamt@straubing.de.'],
+];
+$notice = $notices[$done] ?? null;
+if ($isTest && !$notice) {
+    $notice = ['info', 'Testlink aus einer Testmail – die Angaben sind Beispieldaten, die Buttons ändern nichts.'];
+}
+
+$link = static fn(string $a): string => 'reservierung.php?t=' . rawurlencode($token) . '&a=' . $a;
+
 if (!$reservation || $error) {
     http_response_code($error ? 500 : 404);
 }
@@ -155,7 +174,7 @@ if (!$reservation || $error) {
 <title>Ihre Tischreservierung &ndash; 1. Straubinger Spitalbierfest</title>
 <link rel="stylesheet" href="css/styles.css">
 </head>
-<body>
+<body class="guest-page">
 
 <header class="site-header">
   <div class="site-header__brand">
@@ -167,73 +186,109 @@ if (!$reservation || $error) {
   </nav>
 </header>
 
-<main class="manage">
-  <div class="form-card manage__card">
-    <div class="form-card__head">
-      <h2>Ihre Tischreservierung</h2>
-      <p>1. Straubinger Spitalbierfest &middot; Freitag, 30. Oktober 2026, 18:00 Uhr &middot; Rittersaal im Herzogschloss</p>
+<main class="guest">
+  <section class="guest__hero">
+    <img class="guest__hero-img" src="assets/wirtsstube.png" alt="" aria-hidden="true">
+    <div class="guest__hero-text">
+      <img class="guest__logo" src="assets/logo_spitalbier.svg" alt="Straubinger Spitalbier">
+      <div class="guest__kicker">1616 &ndash; 2026</div>
+      <h1>1. Straubinger Spitalbierfest</h1>
+      <p>Freitag, 30. Oktober 2026 &middot; 18:00 Uhr &middot; Rittersaal im Herzogschloss</p>
     </div>
+  </section>
 
-    <?php if ($message): ?>
-    <div class="manage__msg manage__msg--<?= e($message[0]) ?>" role="status"><?= e($message[1]) ?></div>
+  <div class="guest__card">
+
+    <?php if ($notice): ?>
+    <div class="guest__notice guest__notice--<?= e($notice[0]) ?>" role="status"><?= e($notice[1]) ?></div>
     <?php endif; ?>
 
-    <?php if ($error): ?>
-      <p class="manage__text">Die Seite ist gerade nicht erreichbar. Bitte versuchen Sie es sp&auml;ter erneut oder schreiben Sie uns an <a href="mailto:stiftungsamt@straubing.de">stiftungsamt@straubing.de</a>.</p>
-    <?php elseif (!$reservation): ?>
-      <p class="manage__text">Dieser Link ist ung&uuml;ltig. Bitte verwenden Sie den Link aus Ihrer E-Mail vollst&auml;ndig oder schreiben Sie uns an <a href="mailto:stiftungsamt@straubing.de">stiftungsamt@straubing.de</a>.</p>
+    <?php if ($view === 'error' || $view === 'invalid'): ?>
+
+      <h2 class="guest__title">Hoppla &ndash; das hat nicht geklappt</h2>
+      <p class="guest__lead">
+        <?php if ($view === 'error'): ?>
+          Die Seite ist gerade nicht erreichbar. Bitte versuchen Sie es sp&auml;ter noch einmal.
+        <?php else: ?>
+          Dieser Link ist ung&uuml;ltig oder unvollst&auml;ndig. Bitte &ouml;ffnen Sie den Link direkt aus Ihrer E-Mail.
+        <?php endif; ?>
+        Oder schreiben Sie uns an <a href="mailto:stiftungsamt@straubing.de">stiftungsamt@straubing.de</a>.
+      </p>
+
     <?php else: ?>
 
-      <?php if ($isTest && !$message): ?>
-      <div class="manage__msg manage__msg--info">Testlink aus einer Testmail &ndash; die Angaben sind Beispieldaten, die Buttons &auml;ndern nichts.</div>
+      <?php if ($view === 'confirmed'): ?>
+        <div class="guest__badge guest__badge--ok" aria-hidden="true">&#10003;</div>
+        <h2 class="guest__title"><?= $done === 'confirmed' ? 'Vergelt&rsquo;s Gott' : 'Alles bestätigt' ?>, <?= e($guestName) ?>!</h2>
+        <p class="guest__lead">Ihre Tischreservierung ist best&auml;tigt. Wir freuen uns auf Sie und halten Ihren Tisch bis 18:30&nbsp;Uhr frei.</p>
+      <?php elseif ($view === 'cancel'): ?>
+        <h2 class="guest__title">Reservierung stornieren?</h2>
+        <p class="guest__lead">Schade, dass Sie nicht kommen k&ouml;nnen. Wenn Sie stornieren, geben wir Ihre Pl&auml;tze f&uuml;r andere G&auml;ste frei.</p>
+      <?php elseif ($view === 'cancelled'): ?>
+        <div class="guest__badge guest__badge--muted" aria-hidden="true">&times;</div>
+        <h2 class="guest__title"><?= $done === 'cancelled' ? 'Ihre Reservierung ist storniert' : 'Diese Reservierung ist storniert' ?></h2>
+        <p class="guest__lead">
+          <?= $done === 'cancelled' ? 'Danke, dass Sie Bescheid gegeben haben – so können sich andere Gäste über die Plätze freuen.' : '' ?>
+          Sie m&ouml;chten doch kommen? Schreiben Sie uns an <a href="mailto:stiftungsamt@straubing.de">stiftungsamt@straubing.de</a> &ndash; wir schauen, ob noch Pl&auml;tze frei sind.
+        </p>
+      <?php elseif ($view === 'closed'): ?>
+        <h2 class="guest__title">Gr&uuml;&szlig; Gott, <?= e($guestName) ?>!</h2>
+        <p class="guest__lead">Die Reservierung kann online nicht mehr ge&auml;ndert werden. Bei Fragen erreichen Sie uns unter <a href="mailto:stiftungsamt@straubing.de">stiftungsamt@straubing.de</a>.</p>
+      <?php else: ?>
+        <h2 class="guest__title">Gr&uuml;&szlig; Gott, <?= e($guestName) ?>!</h2>
+        <p class="guest__lead">Ihr Tisch ist reserviert. Bitte best&auml;tigen Sie kurz, dass Sie kommen &ndash; dann wissen wir, dass wir mit Ihnen rechnen d&uuml;rfen.</p>
       <?php endif; ?>
 
-      <dl class="manage__facts">
-        <dt>Name</dt><dd><?= e($guestName) ?></dd>
-        <dt>Reservierung</dt><dd><?= e((string) $reservation['code']) ?></dd>
-        <dt>Personen</dt><dd><?= (int) $reservation['guests'] ?></dd>
-        <?php if ($tables && !$cancelled): ?>
-        <dt>Tisch</dt><dd><?= e(implode(', ', $tables)) ?></dd>
-        <?php endif; ?>
-        <dt>Status</dt>
-        <dd>
-          <?php if ($cancelled): ?>storniert
-          <?php elseif ($confirmed): ?>best&auml;tigt am <?= e((new DateTime($reservation['confirmed_at'], $tz))->format('d.m.Y')) ?>
-          <?php else: ?>reserviert, noch nicht best&auml;tigt
-          <?php endif; ?>
-        </dd>
-      </dl>
+      <div class="ticket<?= $cancelled ? ' ticket--void' : '' ?>">
+        <div class="ticket__main">
+          <div class="ticket__item ticket__item--big">
+            <span class="ticket__label">Ihr Tisch</span>
+            <span class="ticket__value"><?= $tables && !$cancelled ? e(implode(', ', $tables)) : '&ndash;' ?></span>
+          </div>
+          <div class="ticket__item ticket__item--big">
+            <span class="ticket__label">Personen</span>
+            <span class="ticket__value"><?= (int) $reservation['guests'] ?></span>
+          </div>
+          <div class="ticket__item">
+            <span class="ticket__label">Wann</span>
+            <span class="ticket__text">Fr., 30.10.2026, 18:00&nbsp;Uhr</span>
+          </div>
+          <div class="ticket__item">
+            <span class="ticket__label">Wo</span>
+            <span class="ticket__text">Rittersaal im Herzogschloss</span>
+          </div>
+        </div>
+        <div class="ticket__stub">
+          <span>Reservierung <strong><?= e((string) $reservation['code']) ?></strong></span>
+          <span class="ticket__status ticket__status--<?= $cancelled ? 'void' : ($confirmed ? 'ok' : 'open') ?>">
+            <?= $cancelled ? 'storniert' : ($confirmed ? 'bestätigt' : 'noch nicht bestätigt') ?>
+          </span>
+        </div>
+      </div>
 
-      <?php if ($canAct): ?>
-        <?php if ($preselect !== 'stornieren' && !$confirmed): ?>
-        <form method="post" action="reservierung.php" class="manage__action">
+      <?php if ($view === 'confirm'): ?>
+        <form method="post" action="reservierung.php" class="guest__action">
           <input type="hidden" name="t" value="<?= e($token) ?>">
           <input type="hidden" name="action" value="confirm">
-          <button type="submit" class="btn btn--submit">Tischreservierung best&auml;tigen</button>
+          <button type="submit" class="guest__btn guest__btn--confirm">&#10003;&ensp;Tischreservierung best&auml;tigen</button>
         </form>
-        <?php endif; ?>
+        <p class="guest__alt">Sie k&ouml;nnen leider nicht kommen? <a href="<?= e($link('stornieren')) ?>">Reservierung stornieren</a></p>
 
-        <?php if ($preselect === 'stornieren'): ?>
-        <p class="manage__text">M&ouml;chten Sie Ihre Reservierung wirklich stornieren? Ihre Pl&auml;tze werden dann f&uuml;r andere G&auml;ste freigegeben.</p>
-        <?php endif; ?>
-        <form method="post" action="reservierung.php" class="manage__action">
+      <?php elseif ($view === 'cancel'): ?>
+        <form method="post" action="reservierung.php" class="guest__action">
           <input type="hidden" name="t" value="<?= e($token) ?>">
           <input type="hidden" name="action" value="cancel">
-          <button type="submit" class="btn <?= $preselect === 'stornieren' ? 'btn--submit btn--danger' : 'btn--reset manage__cancel' ?>">Tischreservierung stornieren</button>
+          <button type="submit" class="guest__btn guest__btn--cancel">Ja, Tischreservierung stornieren</button>
         </form>
+        <p class="guest__alt">Doch dabei? <a href="<?= e($link('bestaetigen')) ?>"><?= $confirmed ? 'Reservierung behalten' : 'Reservierung bestätigen' ?></a></p>
 
-        <?php if ($preselect === 'stornieren' && !$confirmed): ?>
-        <p class="form-card__note"><a href="reservierung.php?t=<?= e(rawurlencode($token)) ?>&amp;a=bestaetigen">Doch nicht &ndash; ich m&ouml;chte meine Reservierung best&auml;tigen</a></p>
-        <?php endif; ?>
-      <?php elseif ($closed && !$cancelled): ?>
-        <p class="manage__text">Die Reservierung kann online nicht mehr ge&auml;ndert werden. Bei Fragen: <a href="mailto:stiftungsamt@straubing.de">stiftungsamt@straubing.de</a></p>
-      <?php elseif ($cancelled): ?>
-        <p class="manage__text">Sie m&ouml;chten doch kommen? Schreiben Sie uns an <a href="mailto:stiftungsamt@straubing.de">stiftungsamt@straubing.de</a> &ndash; wir schauen, ob noch Pl&auml;tze frei sind.</p>
+      <?php elseif ($view === 'confirmed'): ?>
+        <p class="guest__alt">Etwas dazwischengekommen? <a href="<?= e($link('stornieren')) ?>">Reservierung stornieren</a></p>
       <?php endif; ?>
 
     <?php endif; ?>
 
-    <p class="form-card__note">Fragen? <a href="mailto:stiftungsamt@straubing.de">stiftungsamt@straubing.de</a></p>
+    <p class="guest__contact">Fragen? <a href="mailto:stiftungsamt@straubing.de">stiftungsamt@straubing.de</a></p>
   </div>
 </main>
 
@@ -248,7 +303,7 @@ if (!$reservation || $error) {
 
 <script>
 // One press is enough — avoid a double submit on slow connections.
-document.querySelectorAll(".manage__action").forEach(function (form) {
+document.querySelectorAll(".guest__action").forEach(function (form) {
   form.addEventListener("submit", function () {
     form.querySelector("button").disabled = true;
   });

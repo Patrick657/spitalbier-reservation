@@ -540,28 +540,149 @@ h3, h4 { font-family: var(--sans); color: var(--ink); margin: 0; }
 }
 
 /* Guest page behind the links in the Tischbestätigung (reservierung.php) */
-.manage { padding: 56px 16px 72px; background: var(--parchment); }
-.manage__card { max-width: 560px; margin: 0 auto; }
-.manage__text { margin: 16px 0 0; font: 400 15.5px/1.55 var(--sans); color: #6a563a; }
-.manage__facts {
-  display: grid; grid-template-columns: max-content 1fr; gap: 8px 18px;
-  margin: 0; padding: 16px 18px; background: #efe2c8; border-radius: 4px;
-  font: 400 15px/1.4 var(--sans); color: #4a3a26;
+.guest { background: var(--parchment); padding-bottom: 64px; }
+
+.guest__hero {
+  position: relative;
+  overflow: hidden;
+  padding: 44px 24px 120px;
+  text-align: center;
+  background: var(--ink);
 }
-.manage__facts dt { font-weight: 700; color: var(--gold); }
-.manage__facts dd { margin: 0; }
-.manage__action { margin: 0; }
-.manage__cancel { display: block; margin: 14px auto 0; }
-.manage__msg {
-  margin-bottom: 16px; padding: 12px 14px; border-radius: 4px;
-  font: 400 15px/1.45 var(--sans);
+.guest__hero-img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: 52% 40%;
+  opacity: .35;
 }
-.manage__msg--ok { background: #e2ecd8; border: 1px solid #b9cfa6; color: #3a5a24; }
-.manage__msg--info { background: #efe2c8; border: 1px solid #d6c4a4; color: #6a563a; }
-.manage__msg--error { background: #f6dede; border: 1px solid #e0a9a0; color: #7a2418; }
-.btn--danger { background: var(--rust); }
-.btn--danger:hover { background: var(--rust-hover); }
-@media (max-width: 520px) {
-  .manage { padding: 32px 16px 48px; }
-  .manage__card { padding: 24px 18px 22px; }
+.guest__hero::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(46,33,20,.35) 0%, rgba(46,33,20,.85) 100%);
+}
+.guest__hero-text { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.guest__logo { width: 96px; height: auto; margin-bottom: 4px; filter: brightness(0) invert(.94) sepia(.25); }
+.guest__kicker {
+  font: 600 12px/1 var(--sans);
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: #d9b77a;
+}
+.guest__hero h1 {
+  font: 400 clamp(32px, 5vw, 50px)/1.05 var(--serif);
+  color: var(--cream);
+  text-wrap: balance;
+}
+.guest__hero p { margin: 0; font: 400 16px/1.4 var(--sans); color: #e5d6bb; }
+
+.guest__card {
+  position: relative;
+  z-index: 2;
+  max-width: 580px;
+  margin: -84px auto 0;
+  padding: 36px 36px 28px;
+  background: #fbf5ea;
+  border-radius: 8px;
+  box-shadow: 0 18px 44px rgba(46,33,20,.28);
+  text-align: center;
+}
+.guest__title { font: 400 clamp(28px, 4vw, 36px)/1.1 var(--serif); color: #241a0d; text-wrap: balance; }
+.guest__lead { margin: 12px auto 0; max-width: 44ch; font: 400 16.5px/1.55 var(--sans); color: #5a4830; }
+
+.guest__badge {
+  width: 64px; height: 64px; margin: 0 auto 16px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font: 700 32px/1 var(--sans);
+}
+.guest__badge--ok { background: #3a5a24; color: #fff; box-shadow: 0 0 0 8px #e2ecd8; }
+.guest__badge--muted { background: #d6c4a4; color: #fff; box-shadow: 0 0 0 8px #efe2c8; }
+
+.guest__notice {
+  margin: 0 0 22px; padding: 11px 14px; border-radius: 4px;
+  font: 400 14.5px/1.45 var(--sans); text-align: left;
+}
+.guest__notice--info { background: #efe2c8; border: 1px solid #d6c4a4; color: #6a563a; }
+.guest__notice--error { background: #f6dede; border: 1px solid #e0a9a0; color: #7a2418; }
+
+/* The reservation, shown like an admission ticket */
+.ticket {
+  margin: 26px 0 0;
+  text-align: left;
+  background: #efe2c8;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.ticket__main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 20px;
+  padding: 22px 24px 20px;
+}
+.ticket__item { display: flex; flex-direction: column; gap: 4px; }
+.ticket__label {
+  font: 700 11px/1 var(--sans);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.ticket__value { font: 400 40px/1 var(--serif); color: var(--rust); }
+.ticket__text { font: 400 15.5px/1.35 var(--sans); color: var(--ink); }
+.ticket__stub {
+  position: relative;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 14px;
+  padding: 14px 24px;
+  border-top: 2px dashed #cdb58a;
+  background: #e8d8b9;
+  font: 400 14px/1.3 var(--sans); color: #5a4830;
+}
+/* punched notches where the stub tears off */
+.ticket__stub::before, .ticket__stub::after {
+  content: "";
+  position: absolute; top: -11px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #fbf5ea;
+}
+.ticket__stub::before { left: -10px; }
+.ticket__stub::after { right: -10px; }
+.ticket__status {
+  padding: 4px 11px; border-radius: 999px;
+  font: 700 11.5px/1.4 var(--sans); letter-spacing: .06em; text-transform: uppercase;
+}
+.ticket__status--ok { background: #3a5a24; color: #fff; }
+.ticket__status--open { background: #fbf5ea; color: #8a6a3e; }
+.ticket__status--void { background: #d6c4a4; color: #fff; }
+.ticket--void .ticket__value, .ticket--void .ticket__text { color: #a08e6c; text-decoration: line-through; }
+
+.guest__action { margin: 26px 0 0; }
+.guest__btn {
+  display: block; width: 100%;
+  padding: 18px 22px;
+  border: 0; border-radius: 999px;
+  font: 700 18px/1.2 var(--sans);
+  cursor: pointer;
+  transition: transform .08s ease, background-color .15s ease;
+}
+.guest__btn:active { transform: translateY(1px); }
+.guest__btn:disabled { opacity: .6; cursor: progress; }
+.guest__btn:focus-visible { outline: 3px solid #d9b77a; outline-offset: 3px; }
+.guest__btn--confirm { background: #3a5a24; color: #fff; box-shadow: 0 3px 0 #24391a; }
+.guest__btn--confirm:hover { background: #456b2b; }
+.guest__btn--cancel { background: var(--rust); color: var(--cream); box-shadow: 0 3px 0 var(--rust-shadow); }
+.guest__btn--cancel:hover { background: var(--rust-hover); }
+
+.guest__alt { margin: 18px 0 0; font: 400 15px/1.45 var(--sans); color: #6a563a; }
+.guest__alt a { font-weight: 700; }
+.guest__contact {
+  margin: 26px 0 0; padding-top: 18px;
+  border-top: 1px solid #e3d4b8;
+  font: 400 13.5px/1.4 var(--sans); color: #8a7a5f;
+}
+
+@media (max-width: 560px) {
+  .guest__hero { padding: 32px 16px 104px; }
+  .guest__card { margin: -76px 16px 0; padding: 28px 20px 22px; }
+  .ticket__main { padding: 18px 18px 16px; gap: 16px; }
+  .ticket__value { font-size: 34px; }
+  .ticket__stub { padding: 12px 18px; }
 }
