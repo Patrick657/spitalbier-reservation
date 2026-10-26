@@ -38,6 +38,33 @@ $rows = $pdo->query(
      FROM reservations ORDER BY created_at DESC'
 )->fetchAll();
 
+/** One status per reservation; the filter above the table uses the same keys. */
+function sbf_booking_status(array $r): string
+{
+    if ($r['cancelled_at'] !== null) {
+        return $r['cancelled_by'] === 'guest' ? 'gast_storniert' : 'storniert';
+    }
+    return $r['confirmed_at'] !== null ? 'bestaetigt' : 'aktiv';
+}
+
+$statusLabels = [
+    'aktiv' => 'Aktiv',
+    'bestaetigt' => 'Vom Gast bestätigt',
+    'storniert' => 'Storniert',
+    'gast_storniert' => 'Vom Gast storniert',
+];
+$statusCounts = array_fill_keys(array_keys($statusLabels), 0);
+foreach ($rows as $r) {
+    $statusCounts[sbf_booking_status($r)]++;
+}
+$statusFilter = (string) ($_GET['status'] ?? '');
+if (!isset($statusLabels[$statusFilter])) {
+    $statusFilter = '';
+}
+$visibleRows = $statusFilter === ''
+    ? $rows
+    : array_values(array_filter($rows, static fn(array $r): bool => sbf_booking_status($r) === $statusFilter));
+
 $assignedByReservation = [];
 foreach ($pdo->query(
     "SELECT ta.reservation_id, vt.code, ta.seats
@@ -129,6 +156,14 @@ function e(string $v): string
     </div>
   </div>
 
+  <nav class="dash-filter" aria-label="Nach Status filtern">
+    <span class="dash-filter__label">Status:</span>
+    <a href="index.php" class="dash-filter__chip<?= $statusFilter === '' ? ' is-active' : '' ?>">Alle <span><?= count($rows) ?></span></a>
+    <?php foreach ($statusLabels as $key => $label): ?>
+    <a href="index.php?status=<?= e($key) ?>" class="dash-filter__chip dash-filter__chip--<?= e($key) ?><?= $statusFilter === $key ? ' is-active' : '' ?>"><?= e($label) ?> <span><?= $statusCounts[$key] ?></span></a>
+    <?php endforeach; ?>
+  </nav>
+
   <div class="dash-table-wrap">
     <table class="dash-table">
       <thead>
@@ -140,16 +175,17 @@ function e(string $v): string
           <th>Personen</th>
           <th>Newsletter</th>
           <th data-sorted="desc">Eingegangen</th>
+          <th>Buchung</th>
           <th>Status</th>
           <th>Sitzplatz</th>
           <th data-nosort></th>
         </tr>
       </thead>
       <tbody>
-        <?php if (!$rows): ?>
-        <tr><td colspan="10" class="dash-table__empty">Noch keine Reservierungen.</td></tr>
+        <?php if (!$visibleRows): ?>
+        <tr><td colspan="11" class="dash-table__empty"><?= $rows ? 'Keine Reservierungen mit diesem Status.' : 'Noch keine Reservierungen.' ?></td></tr>
         <?php endif; ?>
-        <?php foreach ($rows as $r): $cancelled = $r['cancelled_at'] !== null; ?>
+        <?php foreach ($visibleRows as $r): $cancelled = $r['cancelled_at'] !== null; $status = sbf_booking_status($r); ?>
         <tr class="<?= $cancelled ? 'is-cancelled' : '' ?>">
           <td><?= e($r['code']) ?></td>
           <td>
@@ -161,17 +197,14 @@ function e(string $v): string
           <td><?= (int) $r['guests'] ?></td>
           <td><?= $r['newsletter'] ? 'ja' : 'nein' ?></td>
           <td data-sort="<?= e($r['created_at']) ?>"><?= e((new DateTime($r['created_at'], $tz))->format('d.m.Y H:i')) ?></td>
-          <td>
-            <?php if ($cancelled): ?>
-              <span class="dash-badge dash-badge--cancelled"><?= $r['cancelled_by'] === 'guest' ? 'vom Gast storniert' : 'storniert' ?></span>
-              <br><span class="dash-note"><?= e((new DateTime($r['cancelled_at'], $tz))->format('d.m. H:i')) ?></span>
-            <?php elseif ($r['confirmed_at'] !== null): ?>
-              <span class="dash-badge dash-badge--active" title="Best&auml;tigt am <?= e((new DateTime($r['confirmed_at'], $tz))->format('d.m.Y H:i')) ?>">best&auml;tigt</span>
-            <?php else: ?>
-              <span class="dash-badge dash-badge--active">aktiv</span>
-            <?php endif; ?>
-            <?php if ($r['source'] === 'admin'): ?>
-              <span class="dash-badge dash-badge--manual">manuell</span>
+          <td><?= $r['source'] === 'admin' ? 'Manuell' : 'Formular' ?></td>
+          <td data-sort="<?= e($status) ?>">
+            <span class="dash-status dash-status--<?= e($status) ?>"><?= e($statusLabels[$status]) ?></span>
+            <?php
+              $statusAt = $cancelled ? $r['cancelled_at'] : $r['confirmed_at'];
+              if ($statusAt !== null):
+            ?>
+            <span class="dash-status__date"><?= $cancelled ? 'storniert' : 'bestätigt' ?> am <?= e((new DateTime($statusAt, $tz))->format('d.m. H:i')) ?></span>
             <?php endif; ?>
           </td>
           <td>
