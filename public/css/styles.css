@@ -654,12 +654,17 @@ h3, h4 { font-family: var(--sans); color: var(--ink); margin: 0; }
 .ticket__status--void { background: #d6c4a4; color: #fff; }
 .ticket--void .ticket__value, .ticket--void .ticket__text { color: #a08e6c; text-decoration: line-through; }
 
-.guest__action { margin: 26px 0 0; }
+.guest__actions {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  margin: 26px 0 0;
+}
+.guest__action { margin: 0; display: flex; }
+.guest__action .guest__btn { flex: 1; }
 .guest__btn {
   display: block; width: 100%;
-  padding: 18px 22px;
+  padding: 17px 16px;
   border: 0; border-radius: 999px;
-  font: 700 18px/1.2 var(--sans);
+  font: 700 16.5px/1.2 var(--sans);
   cursor: pointer;
   transition: transform .08s ease, background-color .15s ease;
 }
@@ -670,6 +675,13 @@ h3, h4 { font-family: var(--sans); color: var(--ink); margin: 0; }
 .guest__btn--confirm:hover { background: #456b2b; }
 .guest__btn--cancel { background: var(--rust); color: var(--cream); box-shadow: 0 3px 0 var(--rust-shadow); }
 .guest__btn--cancel:hover { background: var(--rust-hover); }
+.guest__btn--cancel-soft { background: transparent; color: var(--rust); box-shadow: inset 0 0 0 2px #c9a887; }
+.guest__btn--cancel-soft:hover { background: var(--rust); color: var(--cream); box-shadow: none; }
+.guest__btn--done,
+.guest__btn--done:disabled { background: #e2ecd8; color: #3a5a24; box-shadow: inset 0 0 0 2px #b9cfa6; opacity: 1; cursor: default; }
+.ticket__stub--ok { background: #3a5a24; border-top-color: #6f8f55; color: #e2ecd8; }
+.ticket__stub--ok strong { color: #fff; }
+.ticket__stub--ok .ticket__status--ok { background: #fff; color: #3a5a24; }
 
 .guest__alt { margin: 18px 0 0; font: 400 15px/1.45 var(--sans); color: #6a563a; }
 .guest__alt a { font-weight: 700; }
@@ -685,4 +697,5 @@ h3, h4 { font-family: var(--sans); color: var(--ink); margin: 0; }
   .ticket__main { padding: 18px 18px 16px; gap: 16px; }
   .ticket__value { font-size: 34px; }
   .ticket__stub { padding: 12px 18px; }
+  .guest__actions { grid-template-columns: 1fr; }
 }

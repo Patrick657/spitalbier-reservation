@@ -258,32 +258,31 @@ if (!$reservation || $error) {
             <span class="ticket__text">Rittersaal im Herzogschloss</span>
           </div>
         </div>
-        <div class="ticket__stub">
+        <div class="ticket__stub<?= $confirmed && !$cancelled ? ' ticket__stub--ok' : '' ?>">
           <span>Reservierung <strong><?= e((string) $reservation['code']) ?></strong></span>
           <span class="ticket__status ticket__status--<?= $cancelled ? 'void' : ($confirmed ? 'ok' : 'open') ?>">
-            <?= $cancelled ? 'storniert' : ($confirmed ? 'bestätigt' : 'noch nicht bestätigt') ?>
+            <?= $cancelled ? 'storniert' : ($confirmed ? '&#10003; bestätigt' : 'noch nicht bestätigt') ?>
           </span>
         </div>
       </div>
 
-      <?php if ($view === 'confirm'): ?>
-        <form method="post" action="reservierung.php" class="guest__action">
-          <input type="hidden" name="t" value="<?= e($token) ?>">
-          <input type="hidden" name="action" value="confirm">
-          <button type="submit" class="guest__btn guest__btn--confirm">&#10003;&ensp;Tischreservierung best&auml;tigen</button>
-        </form>
-        <p class="guest__alt">Sie k&ouml;nnen leider nicht kommen? <a href="<?= e($link('stornieren')) ?>">Reservierung stornieren</a></p>
-
-      <?php elseif ($view === 'cancel'): ?>
-        <form method="post" action="reservierung.php" class="guest__action">
-          <input type="hidden" name="t" value="<?= e($token) ?>">
-          <input type="hidden" name="action" value="cancel">
-          <button type="submit" class="guest__btn guest__btn--cancel">Ja, Tischreservierung stornieren</button>
-        </form>
-        <p class="guest__alt">Doch dabei? <a href="<?= e($link('bestaetigen')) ?>"><?= $confirmed ? 'Reservierung behalten' : 'Reservierung bestätigen' ?></a></p>
-
-      <?php elseif ($view === 'confirmed'): ?>
-        <p class="guest__alt">Etwas dazwischengekommen? <a href="<?= e($link('stornieren')) ?>">Reservierung stornieren</a></p>
+      <?php if (in_array($view, ['confirm', 'confirmed', 'cancel'], true)): ?>
+        <div class="guest__actions">
+          <form method="post" action="reservierung.php" class="guest__action">
+            <input type="hidden" name="t" value="<?= e($token) ?>">
+            <input type="hidden" name="action" value="confirm">
+            <?php if ($confirmed): ?>
+            <button type="button" class="guest__btn guest__btn--done" disabled>&#10003;&ensp;Bestätigt</button>
+            <?php else: ?>
+            <button type="submit" class="guest__btn guest__btn--confirm">&#10003;&ensp;Reservierung bestätigen</button>
+            <?php endif; ?>
+          </form>
+          <form method="post" action="reservierung.php" class="guest__action"<?= $view === 'cancel' ? '' : ' data-ask="Möchten Sie Ihre Tischreservierung wirklich stornieren? Ihre Plätze werden dann für andere Gäste freigegeben."' ?>>
+            <input type="hidden" name="t" value="<?= e($token) ?>">
+            <input type="hidden" name="action" value="cancel">
+            <button type="submit" class="guest__btn <?= $view === 'cancel' ? 'guest__btn--cancel' : 'guest__btn--cancel-soft' ?>"><?= $view === 'cancel' ? 'Ja, stornieren' : 'Reservierung stornieren' ?></button>
+          </form>
+        </div>
       <?php endif; ?>
 
     <?php endif; ?>
@@ -302,9 +301,14 @@ if (!$reservation || $error) {
 </footer>
 
 <script>
-// One press is enough — avoid a double submit on slow connections.
+// Cancelling asks once more; one press is enough — no double submit on slow connections.
 document.querySelectorAll(".guest__action").forEach(function (form) {
-  form.addEventListener("submit", function () {
+  form.addEventListener("submit", function (evt) {
+    var ask = form.getAttribute("data-ask");
+    if (ask && !window.confirm(ask)) {
+      evt.preventDefault();
+      return;
+    }
     form.querySelector("button").disabled = true;
   });
 });
